@@ -51,12 +51,8 @@ function LoginPage() {
             ليس لديك حساب؟ <Link to="/signup" className="text-primary font-semibold">إنشاء حساب</Link>
           </div>
 
-          <div className="mt-6 glass rounded-xl p-3 text-xs text-muted-foreground space-y-1">
-            <div className="font-semibold text-foreground">حسابات تجريبية:</div>
-            <div>مريض: patient@raha.com / patient123</div>
-            <div>دكتور: doctor@raha.com / doctor123</div>
-            <div>استقبال: rec@raha.com / rec123</div>
-            <div>أدمن: admin@raha.com / admin123</div>
+          <div className="mt-6 glass rounded-xl p-3 text-xs text-muted-foreground text-center">
+            حساب الأدمن الافتراضي: <span className="text-foreground font-semibold">admin@raha.com / admin123</span>
           </div>
         </div>
       </div>
