@@ -27,7 +27,7 @@ function DoctorsPage() {
 
   const filtered = useMemo(() => doctors.filter((d) =>
     (!specialty || d.specialty === specialty) &&
-    (!city || d.city === city) &&
+    (!city || d.city.includes(city.trim())) &&
     (!q || d.name.includes(q))
   ), [doctors, specialty, city, q]);
 
