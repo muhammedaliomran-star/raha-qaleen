@@ -74,21 +74,7 @@ function AdminDash() {
           </DataTable>
         )}
 
-        {tab === "doctors" && (
-          <DataTable headers={["الاسم","التخصص","المدينة","السعر",""]}>
-            {doctors.map((d) => (
-              <tr key={d.id} className="border-t border-white/40">
-                <td className="p-3 font-semibold flex items-center gap-2"><img src={d.image} className="w-8 h-8 rounded-full object-cover" alt="" />{d.name}</td>
-                <td className="p-3">{d.specialty}</td>
-                <td className="p-3">{d.city}</td>
-                <td className="p-3">{d.price} ج.م</td>
-                <td className="p-3 text-left">
-                  <button onClick={() => { store.setDoctors(doctors.filter(x=>x.id!==d.id)); refresh(); }} className="text-destructive"><Trash2 className="w-4 h-4" /></button>
-                </td>
-              </tr>
-            ))}
-          </DataTable>
-        )}
+        {tab === "doctors" && <DoctorsManager doctors={doctors} onChange={refresh} />}
 
         {tab === "bookings" && (
           <DataTable headers={["المريض","الطبيب","التاريخ","الموعد",""]}>
