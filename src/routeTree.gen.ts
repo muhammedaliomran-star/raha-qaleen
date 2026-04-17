@@ -9,38 +9,167 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as SignupRouteImport } from './routes/signup'
+import { Route as LoginRouteImport } from './routes/login'
+import { Route as DoctorsRouteImport } from './routes/doctors'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as DoctorIdRouteImport } from './routes/doctor.$id'
+import { Route as DashboardReceptionistRouteImport } from './routes/dashboard.receptionist'
+import { Route as DashboardPatientRouteImport } from './routes/dashboard.patient'
+import { Route as DashboardDoctorRouteImport } from './routes/dashboard.doctor'
+import { Route as DashboardAdminRouteImport } from './routes/dashboard.admin'
 
+const SignupRoute = SignupRouteImport.update({
+  id: '/signup',
+  path: '/signup',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DoctorsRoute = DoctorsRouteImport.update({
+  id: '/doctors',
+  path: '/doctors',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DoctorIdRoute = DoctorIdRouteImport.update({
+  id: '/doctor/$id',
+  path: '/doctor/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DashboardReceptionistRoute = DashboardReceptionistRouteImport.update({
+  id: '/dashboard/receptionist',
+  path: '/dashboard/receptionist',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DashboardPatientRoute = DashboardPatientRouteImport.update({
+  id: '/dashboard/patient',
+  path: '/dashboard/patient',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DashboardDoctorRoute = DashboardDoctorRouteImport.update({
+  id: '/dashboard/doctor',
+  path: '/dashboard/doctor',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DashboardAdminRoute = DashboardAdminRouteImport.update({
+  id: '/dashboard/admin',
+  path: '/dashboard/admin',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/doctors': typeof DoctorsRoute
+  '/login': typeof LoginRoute
+  '/signup': typeof SignupRoute
+  '/dashboard/admin': typeof DashboardAdminRoute
+  '/dashboard/doctor': typeof DashboardDoctorRoute
+  '/dashboard/patient': typeof DashboardPatientRoute
+  '/dashboard/receptionist': typeof DashboardReceptionistRoute
+  '/doctor/$id': typeof DoctorIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/doctors': typeof DoctorsRoute
+  '/login': typeof LoginRoute
+  '/signup': typeof SignupRoute
+  '/dashboard/admin': typeof DashboardAdminRoute
+  '/dashboard/doctor': typeof DashboardDoctorRoute
+  '/dashboard/patient': typeof DashboardPatientRoute
+  '/dashboard/receptionist': typeof DashboardReceptionistRoute
+  '/doctor/$id': typeof DoctorIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/doctors': typeof DoctorsRoute
+  '/login': typeof LoginRoute
+  '/signup': typeof SignupRoute
+  '/dashboard/admin': typeof DashboardAdminRoute
+  '/dashboard/doctor': typeof DashboardDoctorRoute
+  '/dashboard/patient': typeof DashboardPatientRoute
+  '/dashboard/receptionist': typeof DashboardReceptionistRoute
+  '/doctor/$id': typeof DoctorIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/doctors'
+    | '/login'
+    | '/signup'
+    | '/dashboard/admin'
+    | '/dashboard/doctor'
+    | '/dashboard/patient'
+    | '/dashboard/receptionist'
+    | '/doctor/$id'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/doctors'
+    | '/login'
+    | '/signup'
+    | '/dashboard/admin'
+    | '/dashboard/doctor'
+    | '/dashboard/patient'
+    | '/dashboard/receptionist'
+    | '/doctor/$id'
+  id:
+    | '__root__'
+    | '/'
+    | '/doctors'
+    | '/login'
+    | '/signup'
+    | '/dashboard/admin'
+    | '/dashboard/doctor'
+    | '/dashboard/patient'
+    | '/dashboard/receptionist'
+    | '/doctor/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  DoctorsRoute: typeof DoctorsRoute
+  LoginRoute: typeof LoginRoute
+  SignupRoute: typeof SignupRoute
+  DashboardAdminRoute: typeof DashboardAdminRoute
+  DashboardDoctorRoute: typeof DashboardDoctorRoute
+  DashboardPatientRoute: typeof DashboardPatientRoute
+  DashboardReceptionistRoute: typeof DashboardReceptionistRoute
+  DoctorIdRoute: typeof DoctorIdRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/signup': {
+      id: '/signup'
+      path: '/signup'
+      fullPath: '/signup'
+      preLoaderRoute: typeof SignupRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/doctors': {
+      id: '/doctors'
+      path: '/doctors'
+      fullPath: '/doctors'
+      preLoaderRoute: typeof DoctorsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -48,21 +177,55 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/doctor/$id': {
+      id: '/doctor/$id'
+      path: '/doctor/$id'
+      fullPath: '/doctor/$id'
+      preLoaderRoute: typeof DoctorIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/dashboard/receptionist': {
+      id: '/dashboard/receptionist'
+      path: '/dashboard/receptionist'
+      fullPath: '/dashboard/receptionist'
+      preLoaderRoute: typeof DashboardReceptionistRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/dashboard/patient': {
+      id: '/dashboard/patient'
+      path: '/dashboard/patient'
+      fullPath: '/dashboard/patient'
+      preLoaderRoute: typeof DashboardPatientRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/dashboard/doctor': {
+      id: '/dashboard/doctor'
+      path: '/dashboard/doctor'
+      fullPath: '/dashboard/doctor'
+      preLoaderRoute: typeof DashboardDoctorRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/dashboard/admin': {
+      id: '/dashboard/admin'
+      path: '/dashboard/admin'
+      fullPath: '/dashboard/admin'
+      preLoaderRoute: typeof DashboardAdminRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  DoctorsRoute: DoctorsRoute,
+  LoginRoute: LoginRoute,
+  SignupRoute: SignupRoute,
+  DashboardAdminRoute: DashboardAdminRoute,
+  DashboardDoctorRoute: DashboardDoctorRoute,
+  DashboardPatientRoute: DashboardPatientRoute,
+  DashboardReceptionistRoute: DashboardReceptionistRoute,
+  DoctorIdRoute: DoctorIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { createStart } from '@tanstack/react-start'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-  }
-}
