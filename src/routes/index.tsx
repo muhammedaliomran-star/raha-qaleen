@@ -57,12 +57,10 @@ function HomePage() {
               </div>
               <div className="flex-1 glass-input rounded-xl flex items-center px-3 h-12">
                 <MapPin className="w-4 h-4 text-primary ml-2" />
-                <input
-                  value={city}
-                  onChange={(e) => setCity(e.target.value)}
-                  placeholder="ابحث عن مدينة..."
-                  className="bg-transparent w-full outline-none text-sm placeholder:text-muted-foreground"
-                />
+                <select value={city} onChange={(e) => setCity(e.target.value)} className="bg-transparent w-full outline-none text-sm">
+                  <option value="">كل المدن</option>
+                  {store.cities.map((c) => <option key={c} value={c}>{c}</option>)}
+                </select>
               </div>
               <button onClick={onSearch} className="btn-primary h-12 px-6 rounded-xl font-bold inline-flex items-center justify-center gap-2">
                 <Search className="w-4 h-4" /> بحث
@@ -90,11 +88,11 @@ function HomePage() {
       {/* SPECIALTIES */}
       <section className="mt-10">
         <h2 className="text-xl sm:text-2xl font-extrabold mb-4">تصفح حسب التخصص</h2>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {store.specialties.slice(0, 8).map((s) => (
-            <Link key={s} to="/doctors" search={{ specialty: s } as never} className="glass card-hover rounded-2xl p-5 text-center">
-              <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl btn-primary grid place-items-center mx-auto"><Stethoscope className="w-8 h-8 sm:w-10 sm:h-10 text-primary-foreground" /></div>
-              <div className="mt-3 font-semibold text-base">{s}</div>
+            <Link key={s} to="/doctors" search={{ specialty: s } as never} className="glass card-hover rounded-2xl p-4 text-center">
+              <div className="w-10 h-10 rounded-xl btn-primary grid place-items-center mx-auto"><Stethoscope className="w-5 h-5 text-primary-foreground" /></div>
+              <div className="mt-2 font-semibold text-sm">{s}</div>
             </Link>
           ))}
         </div>

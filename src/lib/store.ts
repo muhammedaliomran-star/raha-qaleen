@@ -1,3 +1,11 @@
+import doc1 from "@/assets/doc1.jpg";
+import doc2 from "@/assets/doc2.jpg";
+import doc3 from "@/assets/doc3.jpg";
+import doc4 from "@/assets/doc4.jpg";
+import ad1 from "@/assets/ad1.jpg";
+import ad2 from "@/assets/ad2.jpg";
+import ad3 from "@/assets/ad3.jpg";
+
 export type Role = "patient" | "doctor" | "receptionist" | "admin";
 
 export interface User {
@@ -47,14 +55,33 @@ const KEYS = {
   doctors: "rq_doctors",
   bookings: "rq_bookings",
   ads: "rq_ads",
-  initialized: "rq_initialized_v2",
 };
 
 const SPECIALTIES = ["باطنة", "أسنان", "أطفال", "جلدية", "نساء وتوليد", "عظام", "قلب", "نفسية"];
+const CITIES = ["القاهرة", "الإسكندرية", "الجيزة", "المنصورة", "أسيوط", "طنطا"];
 
-// Only one admin account is seeded so the platform is usable from day one.
+const seedDoctors: Doctor[] = [
+  { id: "d1", name: "د. أحمد المصري", specialty: "باطنة", city: "القاهرة", price: 350, image: doc1, times: ["10:00 ص", "12:00 م", "04:00 م", "06:00 م"] },
+  { id: "d2", name: "د. سارة عبدالله", specialty: "نساء وتوليد", city: "الإسكندرية", price: 400, image: doc2, times: ["09:00 ص", "11:00 ص", "03:00 م"] },
+  { id: "d3", name: "د. خالد يوسف", specialty: "أسنان", city: "الجيزة", price: 300, image: doc3, times: ["10:30 ص", "01:00 م", "05:00 م", "07:00 م"] },
+  { id: "d4", name: "د. منى حسن", specialty: "أطفال", city: "القاهرة", price: 280, image: doc4, times: ["09:30 ص", "12:30 م", "04:30 م"] },
+  { id: "d5", name: "د. عمر شريف", specialty: "جلدية", city: "المنصورة", price: 320, image: doc1, times: ["11:00 ص", "02:00 م", "06:30 م"] },
+  { id: "d6", name: "د. ليلى إبراهيم", specialty: "قلب", city: "القاهرة", price: 500, image: doc2, times: ["10:00 ص", "01:00 م"] },
+  { id: "d7", name: "د. حسام علي", specialty: "عظام", city: "طنطا", price: 350, image: doc3, times: ["12:00 م", "04:00 م", "07:00 م"] },
+  { id: "d8", name: "د. نور الدين", specialty: "نفسية", city: "الإسكندرية", price: 450, image: doc4, times: ["11:00 ص", "03:00 م", "06:00 م"] },
+];
+
+const seedAds: Ad[] = [
+  { id: "a1", image: ad1, title: "خصم 20% على أول كشف", description: "احجز الآن مع نخبة من الأطباء واحصل على خصم فوري", cta: "احجز الآن", isActive: true, order: 1 },
+  { id: "a2", image: ad2, title: "عيادات الأسنان الفاخرة", description: "ابتسامة هوليود وتركيبات بأحدث التقنيات", cta: "اعرف المزيد", isActive: true, order: 2 },
+  { id: "a3", image: ad3, title: "رعاية الأطفال على مدار الساعة", description: "أفضل أطباء الأطفال في انتظار طفلك", cta: "احجز الآن", isActive: true, order: 3 },
+];
+
 const seedUsers: User[] = [
   { id: "u-admin", fullName: "المدير العام", age: 35, gender: "male", email: "admin@raha.com", password: "admin123", role: "admin" },
+  { id: "u-doc", fullName: "د. أحمد المصري", age: 40, gender: "male", email: "doctor@raha.com", password: "doctor123", role: "doctor" },
+  { id: "u-rec", fullName: "موظفة الاستقبال", age: 28, gender: "female", email: "rec@raha.com", password: "rec123", role: "receptionist" },
+  { id: "u-pat", fullName: "محمد سامي", age: 30, gender: "male", email: "patient@raha.com", password: "patient123", role: "patient" },
 ];
 
 function read<T>(key: string, fallback: T): T {
@@ -70,17 +97,8 @@ function write<T>(key: string, value: T) {
 
 export function initStore() {
   if (typeof window === "undefined") return;
-  // v2 reset: wipe any old demo data from previous version
-  if (!localStorage.getItem(KEYS.initialized)) {
-    localStorage.removeItem(KEYS.doctors);
-    localStorage.removeItem(KEYS.ads);
-    localStorage.removeItem(KEYS.users);
-    localStorage.removeItem(KEYS.bookings);
-    localStorage.removeItem(KEYS.session);
-    write(KEYS.initialized, true);
-  }
-  if (!localStorage.getItem(KEYS.doctors)) write(KEYS.doctors, [] as Doctor[]);
-  if (!localStorage.getItem(KEYS.ads)) write(KEYS.ads, [] as Ad[]);
+  if (!localStorage.getItem(KEYS.doctors)) write(KEYS.doctors, seedDoctors);
+  if (!localStorage.getItem(KEYS.ads)) write(KEYS.ads, seedAds);
   if (!localStorage.getItem(KEYS.users)) write(KEYS.users, seedUsers);
   if (!localStorage.getItem(KEYS.bookings)) write(KEYS.bookings, [] as Booking[]);
 }
@@ -111,12 +129,6 @@ export const store = {
   getDoctors: () => read<Doctor[]>(KEYS.doctors, []),
   setDoctors: (d: Doctor[]) => write(KEYS.doctors, d),
   getDoctor: (id: string) => store.getDoctors().find((d) => d.id === id),
-  addDoctor: (d: Omit<Doctor, "id">): Doctor => {
-    const list = store.getDoctors();
-    const nd: Doctor = { ...d, id: "d-" + Date.now() };
-    store.setDoctors([nd, ...list]);
-    return nd;
-  },
 
   // Bookings
   getBookings: () => read<Booking[]>(KEYS.bookings, []),
@@ -133,4 +145,5 @@ export const store = {
   setAds: (a: Ad[]) => write(KEYS.ads, a),
 
   specialties: SPECIALTIES,
+  cities: CITIES,
 };
