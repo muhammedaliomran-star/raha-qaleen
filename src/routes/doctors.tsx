@@ -27,7 +27,7 @@ function DoctorsPage() {
 
   const filtered = useMemo(() => doctors.filter((d) =>
     (!specialty || d.specialty === specialty) &&
-    (!city || d.city === city) &&
+    (!city || d.city.includes(city.trim())) &&
     (!q || d.name.includes(q))
   ), [doctors, specialty, city, q]);
 
@@ -48,10 +48,12 @@ function DoctorsPage() {
           </select>
         </div>
         <div className="flex-1 glass-input rounded-xl flex items-center px-3 h-12">
-          <select value={city} onChange={(e) => setCity(e.target.value)} className="bg-transparent w-full outline-none text-sm">
-            <option value="">كل المدن</option>
-            {store.cities.map((c) => <option key={c} value={c}>{c}</option>)}
-          </select>
+          <input
+            value={city}
+            onChange={(e) => setCity(e.target.value)}
+            placeholder="ابحث عن مدينة..."
+            className="bg-transparent w-full outline-none text-sm placeholder:text-muted-foreground"
+          />
         </div>
       </div>
 
