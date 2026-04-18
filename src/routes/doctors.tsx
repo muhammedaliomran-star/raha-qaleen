@@ -3,7 +3,8 @@ import { useEffect, useMemo, useState } from "react";
 import { Search } from "lucide-react";
 import { PageShell } from "@/components/PageShell";
 import { DoctorCard } from "@/components/DoctorCard";
-import { initStore, store, SPECIALTIES, type Doctor } from "@/lib/store";
+import { supabase } from "@/integrations/supabase/client";
+import { SPECIALTIES, QALEEN_AREAS, type Doctor } from "@/lib/store";
 
 interface SearchParams { specialty?: string; area?: string }
 
@@ -23,7 +24,13 @@ function DoctorsPage() {
   const [area, setArea] = useState(search.area ?? "");
   const [q, setQ] = useState("");
 
-  useEffect(() => { initStore(); setDoctors(store.getDoctors()); }, []);
+  useEffect(() => {
+    supabase.from("doctors").select("*").order("created_at", { ascending: false }).then(({ data }) => {
+      setDoctors((data ?? []).map((d) => ({
+        id: d.id, name: d.name, specialty: d.specialty, area: d.area, price: d.price, image: d.image, times: d.times,
+      })));
+    });
+  }, []);
 
   const filtered = useMemo(() => doctors.filter((d) =>
     (!specialty || d.specialty === specialty) &&
@@ -50,7 +57,7 @@ function DoctorsPage() {
         <div className="flex-1 glass-input rounded-xl flex items-center px-3 h-12">
           <select value={area} onChange={(e) => setArea(e.target.value)} className="bg-transparent w-full outline-none text-sm">
             <option value="">كل المناطق</option>
-            {store.areas.map((a) => <option key={a} value={a}>{a}</option>)}
+            {QALEEN_AREAS.map((a) => <option key={a} value={a}>{a}</option>)}
           </select>
         </div>
       </div>

@@ -5,7 +5,8 @@ import { motion } from "framer-motion";
 import { PageShell } from "@/components/PageShell";
 import { AdsSlider } from "@/components/AdsSlider";
 import { DoctorCard } from "@/components/DoctorCard";
-import { initStore, store, SPECIALTIES, type Doctor } from "@/lib/store";
+import { supabase } from "@/integrations/supabase/client";
+import { SPECIALTIES, QALEEN_AREAS, type Doctor } from "@/lib/store";
 import heroImg from "@/assets/hero.jpg";
 
 export const Route = createFileRoute("/")({
@@ -19,7 +20,11 @@ function HomePage() {
   const [area, setArea] = useState("");
   const [doctors, setDoctors] = useState<Doctor[]>([]);
 
-  useEffect(() => { initStore(); setDoctors(store.getDoctors()); }, []);
+  useEffect(() => {
+    supabase.from("doctors").select("*").order("created_at", { ascending: false }).limit(8).then(({ data }) => {
+      setDoctors((data ?? []).map(mapDoctor));
+    });
+  }, []);
 
   const featured = useMemo(() => doctors.slice(0, 4), [doctors]);
 
@@ -46,7 +51,6 @@ function HomePage() {
               اختار التخصص وحدّد منطقتك، واحجز عند أقرب دكتور ليك في ثواني — من غير مكالمات ولا انتظار.
             </p>
 
-            {/* Search */}
             <div className="glass-strong mt-6 rounded-2xl p-3 sm:p-4 flex flex-col sm:flex-row gap-2">
               <div className="flex-1 glass-input rounded-xl flex items-center px-3 h-12">
                 <Stethoscope className="w-4 h-4 text-primary ml-2" />
@@ -59,7 +63,7 @@ function HomePage() {
                 <MapPin className="w-4 h-4 text-primary ml-2" />
                 <select value={area} onChange={(e) => setArea(e.target.value)} className="bg-transparent w-full outline-none text-sm">
                   <option value="">حدّد منطقتك</option>
-                  {store.areas.map((a) => <option key={a} value={a}>{a}</option>)}
+                  {QALEEN_AREAS.map((a) => <option key={a} value={a}>{a}</option>)}
                 </select>
               </div>
               <button onClick={onSearch} className="btn-primary h-12 px-6 rounded-xl font-bold inline-flex items-center justify-center gap-2">
@@ -80,12 +84,8 @@ function HomePage() {
         </div>
       </section>
 
-      {/* ADS */}
-      <section className="mt-8">
-        <AdsSlider />
-      </section>
+      <section className="mt-8"><AdsSlider /></section>
 
-      {/* SPECIALTIES */}
       <section className="mt-10">
         <h2 className="text-xl sm:text-2xl font-extrabold mb-4">اختر التخصص</h2>
         <div className="grid grid-cols-3 sm:grid-cols-5 gap-3 sm:gap-4">
@@ -100,7 +100,6 @@ function HomePage() {
         </div>
       </section>
 
-      {/* FEATURED DOCTORS */}
       <section className="mt-10">
         <div className="flex items-end justify-between mb-4">
           <h2 className="text-xl sm:text-2xl font-extrabold">أطباء مميزون</h2>
@@ -116,4 +115,8 @@ function HomePage() {
       </section>
     </PageShell>
   );
+}
+
+function mapDoctor(d: { id: string; name: string; specialty: string; area: string; price: number; image: string; times: string[] }): Doctor {
+  return { id: d.id, name: d.name, specialty: d.specialty, area: d.area, price: d.price, image: d.image, times: d.times };
 }
