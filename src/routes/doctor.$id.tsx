@@ -37,7 +37,7 @@ function DoctorPage() {
               <h1 className="text-2xl sm:text-3xl font-extrabold">{doctor.name}</h1>
               <div className="mt-2 flex flex-wrap gap-2 text-sm">
                 <span className="glass px-3 h-8 rounded-full inline-flex items-center gap-1"><Stethoscope className="w-3.5 h-3.5" /> {doctor.specialty}</span>
-                <span className="glass px-3 h-8 rounded-full inline-flex items-center gap-1"><MapPin className="w-3.5 h-3.5" /> {doctor.city}</span>
+                <span className="glass px-3 h-8 rounded-full inline-flex items-center gap-1"><MapPin className="w-3.5 h-3.5" /> {doctor.area}</span>
                 <span className="glass px-3 h-8 rounded-full inline-flex items-center gap-1 text-success"><BadgeCheck className="w-3.5 h-3.5" /> متاح اليوم</span>
                 <span className="glass px-3 h-8 rounded-full inline-flex items-center gap-1 text-amber-600"><Star className="w-3.5 h-3.5 fill-current" /> 4.9</span>
               </div>
