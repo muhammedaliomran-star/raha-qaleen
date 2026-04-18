@@ -2,8 +2,8 @@ import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { z } from "zod";
 import { PageShell } from "@/components/PageShell";
-import { useAuth } from "@/lib/auth";
-import { store, type Role, type BookingType } from "@/lib/store";
+import { supabase } from "@/integrations/supabase/client";
+import type { Role } from "@/lib/store";
 
 export const Route = createFileRoute("/signup")({
   head: () => ({ meta: [{ title: "إنشاء حساب | RAHA" }] }),
@@ -16,14 +16,12 @@ const schema = z.object({
   age: z.number().min(1).max(120),
   gender: z.enum(["male", "female"]),
   phone: z.string().trim().regex(/^01[0-9]{9}$/, { message: "رقم هاتف مصري غير صالح (مثال: 01012345678)" }),
-  email: z.string().trim().email({ message: "بريد إلكتروني غير صالح" }).optional().or(z.literal("")),
+  email: z.string().trim().email({ message: "بريد إلكتروني غير صالح" }),
   password: z.string().min(6, { message: "كلمة المرور 6 أحرف على الأقل" }),
   role: z.enum(["patient", "doctor", "receptionist"]),
-  bookingType: z.enum(["new", "followup"]),
 });
 
 function SignupPage() {
-  const { setUser } = useAuth();
   const navigate = useNavigate();
   const [form, setForm] = useState({
     username: "",
@@ -34,20 +32,49 @@ function SignupPage() {
     email: "",
     password: "",
     role: "patient" as Exclude<Role, "admin">,
-    bookingType: "new" as BookingType,
   });
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const submit = (e: React.FormEvent) => {
+  const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
-    const r = schema.safeParse({ ...form, age: Number(form.age), email: form.email || undefined });
+    const r = schema.safeParse({ ...form, age: Number(form.age) });
     if (!r.success) { setError(r.error.issues[0].message); return; }
+
+    setLoading(true);
     try {
-      const u = store.signup({ ...r.data, email: r.data.email || undefined });
-      setUser(u);
+      const { error: signUpError } = await supabase.auth.signUp({
+        email: r.data.email,
+        password: r.data.password,
+        options: {
+          emailRedirectTo: `${window.location.origin}/`,
+          data: {
+            username: r.data.username,
+            full_name: r.data.fullName,
+            age: r.data.age,
+            gender: r.data.gender,
+            phone: r.data.phone,
+            role: r.data.role,
+          },
+        },
+      });
+
+      if (signUpError) {
+        if (signUpError.message.toLowerCase().includes("already")) {
+          setError("هذا البريد مسجل بالفعل");
+        } else if (signUpError.message.toLowerCase().includes("password")) {
+          setError("كلمة المرور ضعيفة أو مكشوفة، اختر كلمة أقوى");
+        } else {
+          setError(signUpError.message);
+        }
+        return;
+      }
+
       navigate({ to: "/" });
-    } catch (err) { setError((err as Error).message); }
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -55,11 +82,11 @@ function SignupPage() {
       <div className="max-w-lg mx-auto">
         <div className="glass-strong rounded-3xl p-6 sm:p-8">
           <h1 className="text-2xl font-extrabold text-center">إنشاء حساب جديد</h1>
-          <p className="text-sm text-muted-foreground text-center mt-1">سجّل برقم موبايلك واحجز كشفك في ثواني</p>
+          <p className="text-sm text-muted-foreground text-center mt-1">سجّل في ثواني واحجز كشفك</p>
 
           <form onSubmit={submit} className="mt-6 grid sm:grid-cols-2 gap-3">
             <Field label="اسم المستخدم *" sm2={false}>
-              <input value={form.username} onChange={(e) => setForm({ ...form, username: e.target.value })} placeholder="مثال: ahmed_ali" className="glass-input h-12 w-full rounded-xl px-4 outline-none focus:ring-2 focus:ring-primary text-sm" />
+              <input value={form.username} onChange={(e) => setForm({ ...form, username: e.target.value })} placeholder="ahmed_ali" className="glass-input h-12 w-full rounded-xl px-4 outline-none focus:ring-2 focus:ring-primary text-sm" />
             </Field>
             <Field label="رقم الهاتف *" sm2={false}>
               <input type="tel" inputMode="numeric" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} placeholder="01012345678" className="glass-input h-12 w-full rounded-xl px-4 outline-none focus:ring-2 focus:ring-primary text-sm" />
@@ -79,7 +106,7 @@ function SignupPage() {
               </select>
             </Field>
 
-            <Field label="البريد الإلكتروني (اختياري)" sm2>
+            <Field label="البريد الإلكتروني *" sm2>
               <input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="example@email.com" className="glass-input h-12 w-full rounded-xl px-4 outline-none focus:ring-2 focus:ring-primary text-sm" />
             </Field>
 
@@ -102,22 +129,10 @@ function SignupPage() {
               </div>
             </Field>
 
-            <Field label="نوع الحجز" sm2>
-              <div className="grid grid-cols-2 gap-2">
-                {([
-                  { v: "new", l: "كشف جديد" },
-                  { v: "followup", l: "إعادة كشف" },
-                ] as const).map((b) => (
-                  <button type="button" key={b.v} onClick={() => setForm({ ...form, bookingType: b.v })}
-                    className={`h-11 rounded-xl text-sm font-semibold transition ${form.bookingType === b.v ? "btn-primary" : "glass hover:bg-white/80"}`}>
-                    {b.l}
-                  </button>
-                ))}
-              </div>
-            </Field>
-
             {error && <div className="text-destructive text-sm sm:col-span-2 text-center">{error}</div>}
-            <button className="btn-primary h-12 rounded-xl font-bold sm:col-span-2 mt-2">إنشاء الحساب</button>
+            <button disabled={loading} className="btn-primary h-12 rounded-xl font-bold sm:col-span-2 mt-2 disabled:opacity-60">
+              {loading ? "جارٍ إنشاء الحساب..." : "إنشاء الحساب"}
+            </button>
           </form>
           <div className="mt-4 text-center text-sm text-muted-foreground">
             لديك حساب؟ <Link to="/login" className="text-primary font-semibold">تسجيل الدخول</Link>

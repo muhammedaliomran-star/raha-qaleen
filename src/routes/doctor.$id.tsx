@@ -3,7 +3,8 @@ import { useEffect, useState } from "react";
 import { ArrowRight, MapPin, Stethoscope, BadgeCheck, Star } from "lucide-react";
 import { PageShell } from "@/components/PageShell";
 import { BookingModal } from "@/components/BookingModal";
-import { initStore, store, type Doctor } from "@/lib/store";
+import { supabase } from "@/integrations/supabase/client";
+import type { Doctor } from "@/lib/store";
 
 export const Route = createFileRoute("/doctor/$id")({
   head: () => ({ meta: [{ title: "ملف الطبيب | RAHA — QALEEN" }] }),
@@ -16,13 +17,20 @@ export const Route = createFileRoute("/doctor/$id")({
 function DoctorPage() {
   const { id } = Route.useParams();
   const [doctor, setDoctor] = useState<Doctor | null>(null);
+  const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
-    initStore();
-    setDoctor(store.getDoctor(id) ?? null);
+    supabase.from("doctors").select("*").eq("id", id).maybeSingle().then(({ data }) => {
+      if (data) setDoctor({
+        id: data.id, name: data.name, specialty: data.specialty, area: data.area,
+        price: data.price, image: data.image, times: data.times,
+      });
+      setLoading(false);
+    });
   }, [id]);
 
+  if (loading) return <PageShell><div className="glass rounded-2xl p-10 text-center">جارٍ التحميل...</div></PageShell>;
   if (!doctor) return <PageShell><div className="glass rounded-2xl p-10 text-center">الطبيب غير موجود</div></PageShell>;
 
   return (
@@ -60,7 +68,7 @@ function DoctorPage() {
         <div className="glass-strong rounded-3xl p-6 h-fit lg:sticky lg:top-24">
           <div className="text-sm text-muted-foreground">سعر الكشف</div>
           <div className="text-4xl font-extrabold text-primary mt-1">{doctor.price} <span className="text-base font-normal text-muted-foreground">ج.م</span></div>
-          <button onClick={() => setOpen(true)} className="btn-primary w-full mt-5 h-12 rounded-xl font-bold">تأكيد الحجز</button>
+          <button onClick={() => setOpen(true)} className="btn-primary w-full mt-5 h-12 rounded-xl font-bold">احجز الآن</button>
           <p className="text-xs text-muted-foreground mt-3 text-center">لن يتم خصم أي مبلغ — الدفع في العيادة</p>
         </div>
       </div>

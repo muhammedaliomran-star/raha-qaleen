@@ -3,7 +3,8 @@ import { useEffect, useState } from "react";
 import { Users, Stethoscope, CalendarCheck, Megaphone, Trash2, Plus } from "lucide-react";
 import { PageShell } from "@/components/PageShell";
 import { RoleGuard } from "@/components/RoleGuard";
-import { initStore, store, type Ad, type Booking, type Doctor, type User } from "@/lib/store";
+import { supabase } from "@/integrations/supabase/client";
+import { SPECIALTIES, QALEEN_AREAS, ROLE_LABEL, type Ad, type Booking, type Doctor, type Role } from "@/lib/store";
 
 export const Route = createFileRoute("/dashboard/admin")({
   head: () => ({ meta: [{ title: "لوحة الأدمن | RAHA" }] }),
@@ -12,18 +13,59 @@ export const Route = createFileRoute("/dashboard/admin")({
 
 type Tab = "stats" | "users" | "doctors" | "bookings" | "ads";
 
+interface ProfileRow {
+  id: string;
+  username: string;
+  full_name: string;
+  phone: string;
+  age: number;
+  roles: Role[];
+}
+
 function AdminDash() {
   const [tab, setTab] = useState<Tab>("stats");
-  const [users, setUsers] = useState<User[]>([]);
+  const [users, setUsers] = useState<ProfileRow[]>([]);
   const [doctors, setDoctors] = useState<Doctor[]>([]);
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [ads, setAds] = useState<Ad[]>([]);
 
-  const refresh = () => {
-    setUsers(store.getUsers()); setDoctors(store.getDoctors());
-    setBookings(store.getBookings()); setAds(store.getAds().sort((a,b)=>a.order-b.order));
+  const refresh = async () => {
+    const [profilesRes, rolesRes, doctorsRes, bookingsRes, adsRes] = await Promise.all([
+      supabase.from("profiles").select("*"),
+      supabase.from("user_roles").select("*"),
+      supabase.from("doctors").select("*").order("created_at", { ascending: false }),
+      supabase.from("bookings").select("*").order("created_at", { ascending: false }),
+      supabase.from("ads").select("*").order("order"),
+    ]);
+
+    const rolesByUser = new Map<string, Role[]>();
+    (rolesRes.data ?? []).forEach((r) => {
+      const list = rolesByUser.get(r.user_id) ?? [];
+      list.push(r.role as Role);
+      rolesByUser.set(r.user_id, list);
+    });
+
+    setUsers((profilesRes.data ?? []).map((p) => ({
+      id: p.id, username: p.username, full_name: p.full_name, phone: p.phone, age: p.age,
+      roles: rolesByUser.get(p.id) ?? [],
+    })));
+    setDoctors((doctorsRes.data ?? []).map((d) => ({
+      id: d.id, name: d.name, specialty: d.specialty, area: d.area,
+      price: d.price, image: d.image, times: d.times,
+    })));
+    setBookings((bookingsRes.data ?? []).map((b) => ({
+      id: b.id, doctorId: b.doctor_id, doctorName: b.doctor_name,
+      patientId: b.patient_id, patientName: b.patient_name,
+      time: b.time, date: b.date,
+      status: b.status as Booking["status"], bookingType: b.booking_type as Booking["bookingType"],
+    })));
+    setAds((adsRes.data ?? []).map((a) => ({
+      id: a.id, title: a.title, description: a.description, cta: a.cta,
+      image: a.image, isActive: a.is_active, order: a.order,
+    })));
   };
-  useEffect(() => { initStore(); refresh(); }, []);
+
+  useEffect(() => { void refresh(); }, []);
 
   const tabs: { id: Tab; label: string; icon: React.ReactNode }[] = [
     { id: "stats", label: "الإحصائيات", icon: <CalendarCheck className="w-4 h-4" /> },
@@ -57,18 +99,16 @@ function AdminDash() {
         )}
 
         {tab === "users" && (
-          <DataTable headers={["الاسم","البريد","الدور","العمر",""]}>
+          <DataTable headers={["الاسم","المستخدم","الهاتف","الأدوار","العمر"]}>
             {users.map((u) => (
               <tr key={u.id} className="border-t border-white/40">
-                <td className="p-3 font-semibold">{u.fullName}</td>
-                <td className="p-3">{u.email}</td>
-                <td className="p-3"><span className="glass px-2 py-1 rounded-full text-xs">{roleLabel(u.role)}</span></td>
-                <td className="p-3">{u.age}</td>
-                <td className="p-3 text-left">
-                  {u.role !== "admin" && (
-                    <button onClick={() => { store.setUsers(users.filter(x=>x.id!==u.id)); refresh(); }} className="text-destructive"><Trash2 className="w-4 h-4" /></button>
-                  )}
+                <td className="p-3 font-semibold">{u.full_name}</td>
+                <td className="p-3">{u.username}</td>
+                <td className="p-3">{u.phone}</td>
+                <td className="p-3 flex flex-wrap gap-1">
+                  {u.roles.map((r) => <span key={r} className="glass px-2 py-1 rounded-full text-xs">{ROLE_LABEL[r]}</span>)}
                 </td>
+                <td className="p-3">{u.age}</td>
               </tr>
             ))}
           </DataTable>
@@ -77,15 +117,16 @@ function AdminDash() {
         {tab === "doctors" && <DoctorsManager doctors={doctors} onChange={refresh} />}
 
         {tab === "bookings" && (
-          <DataTable headers={["المريض","الطبيب","التاريخ","الموعد",""]}>
+          <DataTable headers={["المريض","الطبيب","النوع","التاريخ","الموعد",""]}>
             {bookings.map((b) => (
               <tr key={b.id} className="border-t border-white/40">
                 <td className="p-3 font-semibold">{b.patientName}</td>
                 <td className="p-3">{b.doctorName}</td>
+                <td className="p-3">{b.bookingType === "new" ? "كشف جديد" : "إعادة كشف"}</td>
                 <td className="p-3">{b.date}</td>
                 <td className="p-3">{b.time}</td>
                 <td className="p-3 text-left">
-                  <button onClick={() => { store.setBookings(bookings.filter(x=>x.id!==b.id)); refresh(); }} className="text-destructive"><Trash2 className="w-4 h-4" /></button>
+                  <button onClick={async () => { await supabase.from("bookings").delete().eq("id", b.id); refresh(); }} className="text-destructive"><Trash2 className="w-4 h-4" /></button>
                 </td>
               </tr>
             ))}
@@ -119,35 +160,22 @@ function DataTable({ headers, children }: { headers: string[]; children: React.R
   );
 }
 
-function roleLabel(r: string) {
-  return r === "admin" ? "أدمن" : r === "doctor" ? "دكتور" : r === "receptionist" ? "استقبال" : "مريض";
-}
-
 function AdsManager({ ads, onChange }: { ads: Ad[]; onChange: () => void }) {
   const [form, setForm] = useState({ title: "", description: "", cta: "احجز الآن", image: "" });
 
-  const addAd = () => {
+  const addAd = async () => {
     if (!form.title || !form.image) return;
-    const next: Ad = {
-      id: "a-" + Date.now(), title: form.title, description: form.description,
-      cta: form.cta, image: form.image, isActive: true, order: ads.length + 1,
-    };
-    store.setAds([...ads, next]);
+    await supabase.from("ads").insert({
+      title: form.title, description: form.description, cta: form.cta,
+      image: form.image, is_active: true, order: ads.length + 1,
+    });
     setForm({ title: "", description: "", cta: "احجز الآن", image: "" });
     onChange();
   };
-  const update = (id: string, patch: Partial<Ad>) => {
-    store.setAds(ads.map((a) => a.id === id ? { ...a, ...patch } : a)); onChange();
+  const update = async (id: string, patch: { is_active?: boolean }) => {
+    await supabase.from("ads").update(patch).eq("id", id); onChange();
   };
-  const remove = (id: string) => { store.setAds(ads.filter((a) => a.id !== id)); onChange(); };
-  const move = (id: string, dir: -1 | 1) => {
-    const sorted = [...ads].sort((a,b)=>a.order-b.order);
-    const i = sorted.findIndex(a=>a.id===id);
-    const j = i + dir;
-    if (j < 0 || j >= sorted.length) return;
-    [sorted[i].order, sorted[j].order] = [sorted[j].order, sorted[i].order];
-    store.setAds(sorted); onChange();
-  };
+  const remove = async (id: string) => { await supabase.from("ads").delete().eq("id", id); onChange(); };
 
   return (
     <div className="space-y-6">
@@ -171,10 +199,7 @@ function AdsManager({ ads, onChange }: { ads: Ad[]; onChange: () => void }) {
                 <button onClick={()=>remove(a.id)} className="text-destructive"><Trash2 className="w-4 h-4" /></button>
               </div>
               <div className="mt-3 flex items-center gap-2 text-xs">
-                <label className="flex items-center gap-1"><input type="checkbox" checked={a.isActive} onChange={(e)=>update(a.id,{isActive:e.target.checked})} /> نشط</label>
-                <button onClick={()=>move(a.id,-1)} className="glass px-2 py-1 rounded-md">↑</button>
-                <button onClick={()=>move(a.id,1)} className="glass px-2 py-1 rounded-md">↓</button>
-                <span className="text-muted-foreground">ترتيب: {a.order}</span>
+                <label className="flex items-center gap-1"><input type="checkbox" checked={a.isActive} onChange={(e)=>update(a.id,{is_active:e.target.checked})} /> نشط</label>
               </div>
             </div>
           </div>
@@ -186,12 +211,15 @@ function AdsManager({ ads, onChange }: { ads: Ad[]; onChange: () => void }) {
 
 function DoctorsManager({ doctors, onChange }: { doctors: Doctor[]; onChange: () => void }) {
   const [form, setForm] = useState({
-    name: "", specialty: store.specialties[0], area: store.areas[0], price: "", image: "", times: "10:00 ص, 12:00 م, 04:00 م",
+    name: "", specialty: SPECIALTIES[0].name, area: QALEEN_AREAS[0],
+    price: "", image: "", times: "10:00 ص, 12:00 م, 04:00 م",
   });
+  const [error, setError] = useState("");
 
-  const addDoctor = () => {
-    if (!form.name || !form.area || !form.price) return;
-    store.addDoctor({
+  const addDoctor = async () => {
+    setError("");
+    if (!form.name || !form.area || !form.price) { setError("املأ الاسم والمنطقة والسعر"); return; }
+    const { error: err } = await supabase.from("doctors").insert({
       name: form.name,
       specialty: form.specialty,
       area: form.area,
@@ -199,7 +227,13 @@ function DoctorsManager({ doctors, onChange }: { doctors: Doctor[]; onChange: ()
       image: form.image || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(form.name)}&backgroundColor=1856FF`,
       times: form.times.split(",").map((t) => t.trim()).filter(Boolean),
     });
-    setForm({ name: "", specialty: store.specialties[0], area: store.areas[0], price: "", image: "", times: "10:00 ص, 12:00 م, 04:00 م" });
+    if (err) { setError(err.message); return; }
+    setForm({ name: "", specialty: SPECIALTIES[0].name, area: QALEEN_AREAS[0], price: "", image: "", times: "10:00 ص, 12:00 م, 04:00 م" });
+    onChange();
+  };
+
+  const remove = async (id: string) => {
+    await supabase.from("doctors").delete().eq("id", id);
     onChange();
   };
 
@@ -208,15 +242,16 @@ function DoctorsManager({ doctors, onChange }: { doctors: Doctor[]; onChange: ()
       <div className="glass-strong rounded-2xl p-4 grid sm:grid-cols-6 gap-2">
         <input value={form.name} onChange={(e)=>setForm({...form,name:e.target.value})} placeholder="اسم الطبيب" className="glass-input h-11 rounded-xl px-3 text-sm sm:col-span-2" />
         <select value={form.specialty} onChange={(e)=>setForm({...form,specialty:e.target.value})} className="glass-input h-11 rounded-xl px-3 text-sm">
-          {store.specialtiesMeta.map((s) => <option key={s.key} value={s.name}>{s.emoji} {s.name}</option>)}
+          {SPECIALTIES.map((s) => <option key={s.key} value={s.name}>{s.emoji} {s.name}</option>)}
         </select>
         <select value={form.area} onChange={(e)=>setForm({...form,area:e.target.value})} className="glass-input h-11 rounded-xl px-3 text-sm">
-          {store.areas.map((a) => <option key={a} value={a}>{a}</option>)}
+          {QALEEN_AREAS.map((a) => <option key={a} value={a}>{a}</option>)}
         </select>
         <input type="number" value={form.price} onChange={(e)=>setForm({...form,price:e.target.value})} placeholder="السعر" className="glass-input h-11 rounded-xl px-3 text-sm" />
         <button onClick={addDoctor} className="btn-primary h-11 rounded-xl font-bold inline-flex items-center justify-center gap-1"><Plus className="w-4 h-4" /> إضافة</button>
         <input value={form.image} onChange={(e)=>setForm({...form,image:e.target.value})} placeholder="رابط الصورة (اختياري)" className="glass-input h-11 rounded-xl px-3 text-sm sm:col-span-3" />
         <input value={form.times} onChange={(e)=>setForm({...form,times:e.target.value})} placeholder="المواعيد (مفصولة بفاصلة)" className="glass-input h-11 rounded-xl px-3 text-sm sm:col-span-3" />
+        {error && <div className="sm:col-span-6 text-destructive text-sm">{error}</div>}
       </div>
 
       <div className="glass-strong rounded-2xl overflow-x-auto">
@@ -233,7 +268,7 @@ function DoctorsManager({ doctors, onChange }: { doctors: Doctor[]; onChange: ()
                   <td className="p-3">{d.area}</td>
                   <td className="p-3">{d.price} ج.م</td>
                   <td className="p-3 text-left">
-                    <button onClick={() => { store.setDoctors(doctors.filter(x=>x.id!==d.id)); onChange(); }} className="text-destructive"><Trash2 className="w-4 h-4" /></button>
+                    <button onClick={() => remove(d.id)} className="text-destructive"><Trash2 className="w-4 h-4" /></button>
                   </td>
                 </tr>
               ))}

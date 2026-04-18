@@ -1,14 +1,21 @@
 import { useEffect, useState } from "react";
-import { store, type Ad } from "@/lib/store";
 import { motion, AnimatePresence } from "framer-motion";
+import { supabase } from "@/integrations/supabase/client";
+import type { Ad } from "@/lib/store";
 
 export function AdsSlider() {
   const [ads, setAds] = useState<Ad[]>([]);
   const [i, setI] = useState(0);
 
   useEffect(() => {
-    const list = store.getAds().filter((a) => a.isActive).sort((a, b) => a.order - b.order);
-    setAds(list);
+    supabase.from("ads").select("*").eq("is_active", true).order("order", { ascending: true }).then(({ data }) => {
+      setAds(
+        (data ?? []).map((a) => ({
+          id: a.id, image: a.image, title: a.title, description: a.description,
+          cta: a.cta, isActive: a.is_active, order: a.order,
+        })),
+      );
+    });
   }, []);
 
   useEffect(() => {

@@ -3,29 +3,39 @@ import { motion, AnimatePresence } from "framer-motion";
 import { X, CheckCircle2, Clock } from "lucide-react";
 import { useNavigate } from "@tanstack/react-router";
 import { useAuth } from "@/lib/auth";
-import { store, type Doctor, type BookingType } from "@/lib/store";
+import { supabase } from "@/integrations/supabase/client";
+import type { Doctor, BookingType } from "@/lib/store";
 
 export function BookingModal({ doctor, open, onClose }: { doctor: Doctor; open: boolean; onClose: () => void }) {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const navigate = useNavigate();
   const [time, setTime] = useState<string | null>(null);
-  const [bookingType, setBookingType] = useState<BookingType>(user?.bookingType ?? "new");
+  const [bookingType, setBookingType] = useState<BookingType>("new");
   const [done, setDone] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState("");
 
-  const confirm = () => {
-    if (!user) { onClose(); navigate({ to: "/login" }); return; }
+  const confirm = async () => {
+    if (!user || !profile) { onClose(); navigate({ to: "/login" }); return; }
     if (!time) return;
-    store.addBooking({
-      doctorId: doctor.id,
-      doctorName: doctor.name,
-      patientId: user.id,
-      patientName: user.fullName,
-      time,
-      date: new Date().toLocaleDateString("ar-EG"),
-      status: "upcoming",
-      bookingType,
-    });
-    setDone(true);
+    setError("");
+    setSubmitting(true);
+    try {
+      const { error: insErr } = await supabase.from("bookings").insert({
+        doctor_id: doctor.id,
+        doctor_name: doctor.name,
+        patient_id: user.id,
+        patient_name: profile.fullName,
+        time,
+        date: new Date().toLocaleDateString("ar-EG"),
+        status: "upcoming",
+        booking_type: bookingType,
+      });
+      if (insErr) { setError(insErr.message); return; }
+      setDone(true);
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -101,11 +111,13 @@ export function BookingModal({ doctor, open, onClose }: { doctor: Doctor; open: 
                   <div className="text-primary font-extrabold text-lg">{doctor.price} ج.م</div>
                 </div>
 
+                {error && <div className="mt-3 text-destructive text-sm text-center">{error}</div>}
+
                 <button
-                  disabled={!time}
+                  disabled={!time || submitting}
                   onClick={confirm}
                   className="btn-primary w-full mt-5 h-12 rounded-xl font-bold disabled:opacity-50 disabled:cursor-not-allowed"
-                >تأكيد الحجز</button>
+                >{submitting ? "جارٍ الحجز..." : "تأكيد الحجز"}</button>
               </>
             )}
           </motion.div>

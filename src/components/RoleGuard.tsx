@@ -5,14 +5,17 @@ import { PageShell } from "./PageShell";
 import type { Role } from "@/lib/store";
 
 export function RoleGuard({ allow, children }: { allow: Role[]; children: ReactNode }) {
-  const { user } = useAuth();
+  const { user, roles, loading } = useAuth();
   const navigate = useNavigate();
-  useEffect(() => {
-    if (user === null) return;
-    if (!user || !allow.includes(user.role)) navigate({ to: "/login" });
-  }, [user, allow, navigate]);
+  const allowed = roles.some((r) => allow.includes(r));
 
-  if (!user) return <PageShell><div className="glass rounded-2xl p-10 text-center">جاري التحقق...</div></PageShell>;
-  if (!allow.includes(user.role)) return <PageShell><div className="glass rounded-2xl p-10 text-center text-destructive">ليس لديك صلاحية للوصول</div></PageShell>;
+  useEffect(() => {
+    if (loading) return;
+    if (!user) navigate({ to: "/login" });
+  }, [user, loading, navigate]);
+
+  if (loading) return <PageShell><div className="glass rounded-2xl p-10 text-center">جاري التحقق...</div></PageShell>;
+  if (!user) return null;
+  if (!allowed) return <PageShell><div className="glass rounded-2xl p-10 text-center text-destructive">ليس لديك صلاحية للوصول</div></PageShell>;
   return <>{children}</>;
 }

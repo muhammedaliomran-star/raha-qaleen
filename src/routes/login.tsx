@@ -1,8 +1,7 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { PageShell } from "@/components/PageShell";
-import { useAuth } from "@/lib/auth";
-import { store } from "@/lib/store";
+import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/login")({
   head: () => ({ meta: [{ title: "تسجيل الدخول | RAHA" }] }),
@@ -10,23 +9,30 @@ export const Route = createFileRoute("/login")({
 });
 
 function LoginPage() {
-  const { setUser } = useAuth();
   const navigate = useNavigate();
-  const [identifier, setIdentifier] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const submit = (e: React.FormEvent) => {
+  const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
-    if (!identifier.trim()) { setError("ادخل اسم المستخدم أو رقم الهاتف"); return; }
-    if (password.length < 6) { setError("كلمة المرور قصيرة"); return; }
+    if (!email.trim() || password.length < 6) {
+      setError("ادخل البريد وكلمة المرور");
+      return;
+    }
+    setLoading(true);
     try {
-      const u = store.login(identifier, password);
-      setUser(u);
-      const path = u.role === "admin" ? "/dashboard/admin" : u.role === "doctor" ? "/dashboard/doctor" : u.role === "receptionist" ? "/dashboard/receptionist" : "/dashboard/patient";
-      navigate({ to: path });
-    } catch (err) { setError((err as Error).message); }
+      const { error: err } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
+      if (err) {
+        setError(err.message.toLowerCase().includes("invalid") ? "بيانات الدخول غير صحيحة" : err.message);
+        return;
+      }
+      navigate({ to: "/" });
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -37,15 +43,17 @@ function LoginPage() {
           <p className="text-sm text-muted-foreground text-center mt-1">مرحباً بعودتك إلى RAHA</p>
           <form onSubmit={submit} className="mt-6 space-y-3">
             <label className="block">
-              <span className="block text-xs font-semibold text-foreground/70 mb-1">اسم المستخدم أو رقم الهاتف</span>
-              <input value={identifier} onChange={(e) => setIdentifier(e.target.value)} placeholder="ahmed_ali أو 01012345678" className="glass-input w-full h-12 rounded-xl px-4 outline-none focus:ring-2 focus:ring-primary text-sm" />
+              <span className="block text-xs font-semibold text-foreground/70 mb-1">البريد الإلكتروني</span>
+              <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="example@email.com" className="glass-input w-full h-12 rounded-xl px-4 outline-none focus:ring-2 focus:ring-primary text-sm" />
             </label>
             <label className="block">
               <span className="block text-xs font-semibold text-foreground/70 mb-1">كلمة المرور</span>
               <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••" className="glass-input w-full h-12 rounded-xl px-4 outline-none focus:ring-2 focus:ring-primary text-sm" />
             </label>
             {error && <div className="text-destructive text-sm">{error}</div>}
-            <button className="btn-primary w-full h-12 rounded-xl font-bold">دخول</button>
+            <button disabled={loading} className="btn-primary w-full h-12 rounded-xl font-bold disabled:opacity-60">
+              {loading ? "جارٍ الدخول..." : "دخول"}
+            </button>
           </form>
           <div className="mt-4 text-center text-sm text-muted-foreground">
             ليس لديك حساب؟ <Link to="/signup" className="text-primary font-semibold">إنشاء حساب</Link>

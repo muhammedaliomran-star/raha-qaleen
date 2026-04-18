@@ -3,13 +3,13 @@ import { useAuth } from "@/lib/auth";
 import { LogOut, LayoutDashboard, Stethoscope } from "lucide-react";
 
 export function Navbar() {
-  const { user, logout } = useAuth();
+  const { user, profile, primaryRole, logout } = useAuth();
   const navigate = useNavigate();
 
   const dashPath =
-    user?.role === "admin" ? "/dashboard/admin"
-    : user?.role === "doctor" ? "/dashboard/doctor"
-    : user?.role === "receptionist" ? "/dashboard/receptionist"
+    primaryRole === "admin" ? "/dashboard/admin"
+    : primaryRole === "doctor" ? "/dashboard/doctor"
+    : primaryRole === "receptionist" ? "/dashboard/receptionist"
     : "/dashboard/patient";
 
   return (
@@ -36,11 +36,12 @@ export function Navbar() {
               <button
                 onClick={() => navigate({ to: dashPath })}
                 className="hidden sm:inline-flex items-center gap-2 px-3 h-10 rounded-xl glass text-sm hover:bg-white/80 transition"
+                title={profile?.fullName ?? ""}
               >
                 <LayoutDashboard className="w-4 h-4" /> لوحة التحكم
               </button>
               <button
-                onClick={() => { logout(); navigate({ to: "/" }); }}
+                onClick={async () => { await logout(); navigate({ to: "/" }); }}
                 className="inline-flex items-center gap-2 px-3 h-10 rounded-xl btn-primary text-sm font-semibold"
               >
                 <LogOut className="w-4 h-4" /> خروج
@@ -48,8 +49,8 @@ export function Navbar() {
             </>
           ) : (
             <>
-              <Link to="/login" className="px-3 h-10 inline-flex items-center rounded-xl glass text-sm hover:bg-white/80 transition">تسجيل الدخول</Link>
-              <Link to="/signup" className="px-4 h-10 inline-flex items-center rounded-xl btn-primary text-sm font-semibold">إنشاء حساب</Link>
+              <Link to="/login" className="px-3 h-10 inline-flex items-center rounded-xl glass text-sm hover:bg-white/80 transition">دخول</Link>
+              <Link to="/signup" className="px-4 h-10 inline-flex items-center rounded-xl btn-primary text-sm font-semibold">حساب</Link>
             </>
           )}
         </div>
