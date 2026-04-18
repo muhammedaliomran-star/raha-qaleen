@@ -3,12 +3,13 @@ import { motion, AnimatePresence } from "framer-motion";
 import { X, CheckCircle2, Clock } from "lucide-react";
 import { useNavigate } from "@tanstack/react-router";
 import { useAuth } from "@/lib/auth";
-import { store, type Doctor } from "@/lib/store";
+import { store, type Doctor, type BookingType } from "@/lib/store";
 
 export function BookingModal({ doctor, open, onClose }: { doctor: Doctor; open: boolean; onClose: () => void }) {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [time, setTime] = useState<string | null>(null);
+  const [bookingType, setBookingType] = useState<BookingType>(user?.bookingType ?? "new");
   const [done, setDone] = useState(false);
 
   const confirm = () => {
@@ -22,6 +23,7 @@ export function BookingModal({ doctor, open, onClose }: { doctor: Doctor; open: 
       time,
       date: new Date().toLocaleDateString("ar-EG"),
       status: "upcoming",
+      bookingType,
     });
     setDone(true);
   };
@@ -48,7 +50,9 @@ export function BookingModal({ doctor, open, onClose }: { doctor: Doctor; open: 
               <div className="py-8 text-center">
                 <CheckCircle2 className="w-16 h-16 text-success mx-auto" />
                 <h4 className="mt-4 font-bold text-xl">تم تأكيد الحجز بنجاح</h4>
-                <p className="mt-1 text-sm text-muted-foreground">سنرسل لك تذكير قبل الموعد بساعة</p>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  {bookingType === "new" ? "كشف جديد" : "إعادة كشف"} • سنرسل لك تذكير قبل الموعد
+                </p>
                 <button onClick={() => { setDone(false); setTime(null); onClose(); navigate({ to: "/dashboard/patient" }); }} className="btn-primary mt-6 px-5 h-11 rounded-xl text-sm font-bold">عرض حجوزاتي</button>
               </div>
             ) : (
@@ -57,7 +61,23 @@ export function BookingModal({ doctor, open, onClose }: { doctor: Doctor; open: 
                   <img src={doctor.image} alt={doctor.name} className="w-14 h-14 rounded-2xl object-cover" />
                   <div>
                     <div className="font-bold">{doctor.name}</div>
-                    <div className="text-xs text-muted-foreground">{doctor.specialty} — {doctor.city}</div>
+                    <div className="text-xs text-muted-foreground">{doctor.specialty} — {doctor.area}</div>
+                  </div>
+                </div>
+
+                <div className="mt-5">
+                  <label className="text-sm font-semibold">نوع الحجز</label>
+                  <div className="mt-2 grid grid-cols-2 gap-2">
+                    {([
+                      { v: "new", l: "كشف جديد" },
+                      { v: "followup", l: "إعادة كشف" },
+                    ] as const).map((b) => (
+                      <button
+                        key={b.v}
+                        onClick={() => setBookingType(b.v)}
+                        className={`h-11 rounded-xl text-sm font-bold transition ${bookingType === b.v ? "btn-primary" : "glass hover:bg-white/80 text-foreground"}`}
+                      >{b.l}</button>
+                    ))}
                   </div>
                 </div>
 

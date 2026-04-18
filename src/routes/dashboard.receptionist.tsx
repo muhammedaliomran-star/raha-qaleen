@@ -26,6 +26,7 @@ function Reception() {
       doctorId: doc.id, doctorName: doc.name,
       patientId: "walkin-" + Date.now(), patientName: form.patientName,
       time: form.time, date: new Date().toLocaleDateString("ar-EG"), status: "upcoming",
+      bookingType: "new",
     });
     setShowAdd(false); setForm({ doctorId: "", patientName: "", time: "" }); refresh();
   };

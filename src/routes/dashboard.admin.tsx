@@ -186,20 +186,20 @@ function AdsManager({ ads, onChange }: { ads: Ad[]; onChange: () => void }) {
 
 function DoctorsManager({ doctors, onChange }: { doctors: Doctor[]; onChange: () => void }) {
   const [form, setForm] = useState({
-    name: "", specialty: store.specialties[0], city: "", price: "", image: "", times: "10:00 ص, 12:00 م, 04:00 م",
+    name: "", specialty: store.specialties[0], area: store.areas[0], price: "", image: "", times: "10:00 ص, 12:00 م, 04:00 م",
   });
 
   const addDoctor = () => {
-    if (!form.name || !form.city || !form.price) return;
+    if (!form.name || !form.area || !form.price) return;
     store.addDoctor({
       name: form.name,
       specialty: form.specialty,
-      city: form.city,
+      area: form.area,
       price: Number(form.price) || 0,
       image: form.image || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(form.name)}&backgroundColor=1856FF`,
       times: form.times.split(",").map((t) => t.trim()).filter(Boolean),
     });
-    setForm({ name: "", specialty: store.specialties[0], city: "", price: "", image: "", times: "10:00 ص, 12:00 م, 04:00 م" });
+    setForm({ name: "", specialty: store.specialties[0], area: store.areas[0], price: "", image: "", times: "10:00 ص, 12:00 م, 04:00 م" });
     onChange();
   };
 
@@ -208,9 +208,11 @@ function DoctorsManager({ doctors, onChange }: { doctors: Doctor[]; onChange: ()
       <div className="glass-strong rounded-2xl p-4 grid sm:grid-cols-6 gap-2">
         <input value={form.name} onChange={(e)=>setForm({...form,name:e.target.value})} placeholder="اسم الطبيب" className="glass-input h-11 rounded-xl px-3 text-sm sm:col-span-2" />
         <select value={form.specialty} onChange={(e)=>setForm({...form,specialty:e.target.value})} className="glass-input h-11 rounded-xl px-3 text-sm">
-          {store.specialties.map((s) => <option key={s} value={s}>{s}</option>)}
+          {store.specialtiesMeta.map((s) => <option key={s.key} value={s.name}>{s.emoji} {s.name}</option>)}
         </select>
-        <input value={form.city} onChange={(e)=>setForm({...form,city:e.target.value})} placeholder="المدينة" className="glass-input h-11 rounded-xl px-3 text-sm" />
+        <select value={form.area} onChange={(e)=>setForm({...form,area:e.target.value})} className="glass-input h-11 rounded-xl px-3 text-sm">
+          {store.areas.map((a) => <option key={a} value={a}>{a}</option>)}
+        </select>
         <input type="number" value={form.price} onChange={(e)=>setForm({...form,price:e.target.value})} placeholder="السعر" className="glass-input h-11 rounded-xl px-3 text-sm" />
         <button onClick={addDoctor} className="btn-primary h-11 rounded-xl font-bold inline-flex items-center justify-center gap-1"><Plus className="w-4 h-4" /> إضافة</button>
         <input value={form.image} onChange={(e)=>setForm({...form,image:e.target.value})} placeholder="رابط الصورة (اختياري)" className="glass-input h-11 rounded-xl px-3 text-sm sm:col-span-3" />
@@ -222,13 +224,13 @@ function DoctorsManager({ doctors, onChange }: { doctors: Doctor[]; onChange: ()
           <div className="p-10 text-center text-muted-foreground">لا يوجد أطباء بعد — أضف أول طبيب من النموذج أعلاه</div>
         ) : (
           <table className="w-full text-sm">
-            <thead className="bg-white/40"><tr className="text-right"><th className="p-3">الاسم</th><th className="p-3">التخصص</th><th className="p-3">المدينة</th><th className="p-3">السعر</th><th className="p-3"></th></tr></thead>
+            <thead className="bg-white/40"><tr className="text-right"><th className="p-3">الاسم</th><th className="p-3">التخصص</th><th className="p-3">المنطقة</th><th className="p-3">السعر</th><th className="p-3"></th></tr></thead>
             <tbody>
               {doctors.map((d) => (
                 <tr key={d.id} className="border-t border-white/40">
                   <td className="p-3 font-semibold flex items-center gap-2"><img src={d.image} className="w-8 h-8 rounded-full object-cover" alt="" />{d.name}</td>
                   <td className="p-3">{d.specialty}</td>
-                  <td className="p-3">{d.city}</td>
+                  <td className="p-3">{d.area}</td>
                   <td className="p-3">{d.price} ج.م</td>
                   <td className="p-3 text-left">
                     <button onClick={() => { store.setDoctors(doctors.filter(x=>x.id!==d.id)); onChange(); }} className="text-destructive"><Trash2 className="w-4 h-4" /></button>

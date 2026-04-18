@@ -1,20 +1,30 @@
 export type Role = "patient" | "doctor" | "receptionist" | "admin";
+export type BookingType = "new" | "followup";
 
 export interface User {
   id: string;
+  username: string;
   fullName: string;
   age: number;
   gender: "male" | "female";
-  email: string;
+  phone: string;
+  email?: string;
   password: string;
   role: Role;
+  bookingType?: BookingType;
+}
+
+export interface Specialty {
+  key: string;
+  name: string;
+  emoji: string;
 }
 
 export interface Doctor {
   id: string;
   name: string;
-  specialty: string;
-  city: string;
+  specialty: string; // specialty name (Arabic)
+  area: string;      // area within Qaleen
   price: number;
   image: string;
   times: string[];
@@ -29,6 +39,7 @@ export interface Booking {
   time: string;
   date: string;
   status: "upcoming" | "done" | "cancelled";
+  bookingType: BookingType;
 }
 
 export interface Ad {
@@ -47,14 +58,40 @@ const KEYS = {
   doctors: "rq_doctors",
   bookings: "rq_bookings",
   ads: "rq_ads",
-  initialized: "rq_initialized_v2",
+  initialized: "rq_initialized_v3",
 };
 
-const SPECIALTIES = ["باطنة", "أسنان", "أطفال", "جلدية", "نساء وتوليد", "عظام", "قلب", "نفسية"];
+export const SPECIALTIES: Specialty[] = [
+  { key: "cardio", name: "قلب", emoji: "❤️" },
+  { key: "dental", name: "أسنان", emoji: "🦷" },
+  { key: "derma", name: "جلدية", emoji: "🧴" },
+  { key: "pediatrics", name: "أطفال", emoji: "👶" },
+  { key: "internal", name: "باطنة", emoji: "🩺" },
+  { key: "ortho", name: "عظام", emoji: "🦴" },
+  { key: "obgyn", name: "نساء وتوليد", emoji: "🤰" },
+  { key: "ent", name: "أنف وأذن", emoji: "👂" },
+  { key: "eye", name: "رمد", emoji: "👁️" },
+  { key: "psych", name: "نفسية", emoji: "🧠" },
+];
 
-// Only one admin account is seeded so the platform is usable from day one.
+export const QALEEN_AREAS: string[] = [
+  "قلين",
+  "منشأة عباس",
+  "شباس الشهداء",
+  "شباس الملح",
+  "كفر المرازقة",
+  "كفر يوسف",
+  "عزبة بدوي",
+  "عزبة عمرو",
+  "كفر الشيخ",
+];
+
+export function getSpecialtyMeta(name: string): Specialty {
+  return SPECIALTIES.find((s) => s.name === name) ?? { key: "other", name, emoji: "🩺" };
+}
+
 const seedUsers: User[] = [
-  { id: "u-admin", fullName: "المدير العام", age: 35, gender: "male", email: "admin@raha.com", password: "admin123", role: "admin" },
+  { id: "u-admin", username: "admin", fullName: "المدير العام", age: 35, gender: "male", phone: "01000000000", email: "admin@raha.com", password: "admin123", role: "admin" },
 ];
 
 function read<T>(key: string, fallback: T): T {
@@ -70,7 +107,6 @@ function write<T>(key: string, value: T) {
 
 export function initStore() {
   if (typeof window === "undefined") return;
-  // v2 reset: wipe any old demo data from previous version
   if (!localStorage.getItem(KEYS.initialized)) {
     localStorage.removeItem(KEYS.doctors);
     localStorage.removeItem(KEYS.ads);
@@ -91,14 +127,21 @@ export const store = {
   setUsers: (u: User[]) => write(KEYS.users, u),
   signup: (u: Omit<User, "id">): User => {
     const users = store.getUsers();
-    if (users.some((x) => x.email === u.email)) throw new Error("البريد الإلكتروني مستخدم بالفعل");
+    if (users.some((x) => x.username.toLowerCase() === u.username.toLowerCase())) throw new Error("اسم المستخدم مستخدم بالفعل");
+    if (users.some((x) => x.phone === u.phone)) throw new Error("رقم الهاتف مسجل بالفعل");
+    if (u.email && users.some((x) => x.email && x.email === u.email)) throw new Error("البريد الإلكتروني مستخدم بالفعل");
     const newUser: User = { ...u, id: "u-" + Date.now() };
     store.setUsers([...users, newUser]);
     store.setSession(newUser);
     return newUser;
   },
-  login: (email: string, password: string): User => {
-    const user = store.getUsers().find((x) => x.email === email && x.password === password);
+  login: (identifier: string, password: string): User => {
+    const id = identifier.trim().toLowerCase();
+    const user = store.getUsers().find(
+      (x) =>
+        (x.username.toLowerCase() === id || x.phone === identifier.trim() || (x.email ?? "").toLowerCase() === id) &&
+        x.password === password,
+    );
     if (!user) throw new Error("بيانات الدخول غير صحيحة");
     store.setSession(user);
     return user;
@@ -132,5 +175,7 @@ export const store = {
   getAds: () => read<Ad[]>(KEYS.ads, []),
   setAds: (a: Ad[]) => write(KEYS.ads, a),
 
-  specialties: SPECIALTIES,
+  specialties: SPECIALTIES.map((s) => s.name),
+  specialtiesMeta: SPECIALTIES,
+  areas: QALEEN_AREAS,
 };

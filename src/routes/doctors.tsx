@@ -3,14 +3,14 @@ import { useEffect, useMemo, useState } from "react";
 import { Search } from "lucide-react";
 import { PageShell } from "@/components/PageShell";
 import { DoctorCard } from "@/components/DoctorCard";
-import { initStore, store, type Doctor } from "@/lib/store";
+import { initStore, store, SPECIALTIES, type Doctor } from "@/lib/store";
 
-interface SearchParams { specialty?: string; city?: string }
+interface SearchParams { specialty?: string; area?: string }
 
 export const Route = createFileRoute("/doctors")({
   validateSearch: (s: Record<string, unknown>): SearchParams => ({
     specialty: typeof s.specialty === "string" ? s.specialty : undefined,
-    city: typeof s.city === "string" ? s.city : undefined,
+    area: typeof s.area === "string" ? s.area : undefined,
   }),
   head: () => ({ meta: [{ title: "الأطباء | RAHA — QALEEN" }] }),
   component: DoctorsPage,
@@ -20,21 +20,21 @@ function DoctorsPage() {
   const search = Route.useSearch();
   const [doctors, setDoctors] = useState<Doctor[]>([]);
   const [specialty, setSpecialty] = useState(search.specialty ?? "");
-  const [city, setCity] = useState(search.city ?? "");
+  const [area, setArea] = useState(search.area ?? "");
   const [q, setQ] = useState("");
 
   useEffect(() => { initStore(); setDoctors(store.getDoctors()); }, []);
 
   const filtered = useMemo(() => doctors.filter((d) =>
     (!specialty || d.specialty === specialty) &&
-    (!city || d.city.includes(city.trim())) &&
+    (!area || d.area === area) &&
     (!q || d.name.includes(q))
-  ), [doctors, specialty, city, q]);
+  ), [doctors, specialty, area, q]);
 
   return (
     <PageShell>
-      <h1 className="text-2xl sm:text-3xl font-extrabold">الأطباء</h1>
-      <p className="text-muted-foreground mt-1">اعثر على الطبيب المناسب لك</p>
+      <h1 className="text-2xl sm:text-3xl font-extrabold">الأطباء في قلين</h1>
+      <p className="text-muted-foreground mt-1">مركز قلين - كفر الشيخ</p>
 
       <div className="glass-strong mt-6 rounded-2xl p-3 sm:p-4 flex flex-col sm:flex-row gap-2">
         <div className="flex-1 glass-input rounded-xl flex items-center px-3 h-12">
@@ -44,16 +44,14 @@ function DoctorsPage() {
         <div className="flex-1 glass-input rounded-xl flex items-center px-3 h-12">
           <select value={specialty} onChange={(e) => setSpecialty(e.target.value)} className="bg-transparent w-full outline-none text-sm">
             <option value="">كل التخصصات</option>
-            {store.specialties.map((s) => <option key={s} value={s}>{s}</option>)}
+            {SPECIALTIES.map((s) => <option key={s.key} value={s.name}>{s.emoji} {s.name}</option>)}
           </select>
         </div>
         <div className="flex-1 glass-input rounded-xl flex items-center px-3 h-12">
-          <input
-            value={city}
-            onChange={(e) => setCity(e.target.value)}
-            placeholder="ابحث عن مدينة..."
-            className="bg-transparent w-full outline-none text-sm placeholder:text-muted-foreground"
-          />
+          <select value={area} onChange={(e) => setArea(e.target.value)} className="bg-transparent w-full outline-none text-sm">
+            <option value="">كل المناطق</option>
+            {store.areas.map((a) => <option key={a} value={a}>{a}</option>)}
+          </select>
         </div>
       </div>
 
