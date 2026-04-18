@@ -14,16 +14,191 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      ads: {
+        Row: {
+          created_at: string
+          cta: string
+          description: string
+          id: string
+          image: string
+          is_active: boolean
+          order: number
+          title: string
+        }
+        Insert: {
+          created_at?: string
+          cta?: string
+          description?: string
+          id?: string
+          image: string
+          is_active?: boolean
+          order?: number
+          title: string
+        }
+        Update: {
+          created_at?: string
+          cta?: string
+          description?: string
+          id?: string
+          image?: string
+          is_active?: boolean
+          order?: number
+          title?: string
+        }
+        Relationships: []
+      }
+      bookings: {
+        Row: {
+          booking_type: Database["public"]["Enums"]["booking_type"]
+          created_at: string
+          date: string
+          doctor_id: string
+          doctor_name: string
+          id: string
+          patient_id: string
+          patient_name: string
+          status: Database["public"]["Enums"]["booking_status"]
+          time: string
+        }
+        Insert: {
+          booking_type?: Database["public"]["Enums"]["booking_type"]
+          created_at?: string
+          date: string
+          doctor_id: string
+          doctor_name: string
+          id?: string
+          patient_id: string
+          patient_name: string
+          status?: Database["public"]["Enums"]["booking_status"]
+          time: string
+        }
+        Update: {
+          booking_type?: Database["public"]["Enums"]["booking_type"]
+          created_at?: string
+          date?: string
+          doctor_id?: string
+          doctor_name?: string
+          id?: string
+          patient_id?: string
+          patient_name?: string
+          status?: Database["public"]["Enums"]["booking_status"]
+          time?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bookings_doctor_id_fkey"
+            columns: ["doctor_id"]
+            isOneToOne: false
+            referencedRelation: "doctors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      doctors: {
+        Row: {
+          area: string
+          created_at: string
+          id: string
+          image: string
+          name: string
+          price: number
+          specialty: string
+          times: string[]
+        }
+        Insert: {
+          area: string
+          created_at?: string
+          id?: string
+          image?: string
+          name: string
+          price?: number
+          specialty: string
+          times?: string[]
+        }
+        Update: {
+          area?: string
+          created_at?: string
+          id?: string
+          image?: string
+          name?: string
+          price?: number
+          specialty?: string
+          times?: string[]
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          age: number
+          created_at: string
+          full_name: string
+          gender: Database["public"]["Enums"]["gender_type"]
+          id: string
+          phone: string
+          updated_at: string
+          username: string
+        }
+        Insert: {
+          age: number
+          created_at?: string
+          full_name: string
+          gender: Database["public"]["Enums"]["gender_type"]
+          id: string
+          phone: string
+          updated_at?: string
+          username: string
+        }
+        Update: {
+          age?: number
+          created_at?: string
+          full_name?: string
+          gender?: Database["public"]["Enums"]["gender_type"]
+          id?: string
+          phone?: string
+          updated_at?: string
+          username?: string
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "patient" | "doctor" | "receptionist" | "admin"
+      booking_status: "upcoming" | "done" | "cancelled"
+      booking_type: "new" | "followup"
+      gender_type: "male" | "female"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +325,11 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["patient", "doctor", "receptionist", "admin"],
+      booking_status: ["upcoming", "done", "cancelled"],
+      booking_type: ["new", "followup"],
+      gender_type: ["male", "female"],
+    },
   },
 } as const
