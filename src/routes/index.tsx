@@ -8,7 +8,6 @@ import { DoctorCard } from "@/components/DoctorCard";
 import { SpecialtyPicker } from "@/components/SpecialtyPicker";
 import { supabase } from "@/integrations/supabase/client";
 import { SPECIALTIES, QALEEN_AREAS, type Doctor } from "@/lib/store";
-void SPECIALTIES;
 import heroImg from "@/assets/hero.jpg";
 
 export const Route = createFileRoute("/")({
