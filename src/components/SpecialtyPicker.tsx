@@ -7,14 +7,14 @@ import { SPECIALTIES } from "@/lib/store";
 // Healthicons (outline) — free MIT, unified line-art medical set
 // Using the official "specialties" category names from healthicons.org
 const ICON_MAP: Record<string, string> = {
-  derma_laser: "healthicons:dermatology-outline",
-  surgery: "healthicons:surgical-department-outline",
+  derma_laser: "healthicons:skin-cancer-outline",
+  surgery: "healthicons:general-surgery-outline",
   pediatrics: "healthicons:pediatrics-outline",
   dental: "healthicons:dental-hygiene-outline",
   psych: "healthicons:psychology-outline",
-  neuro: "healthicons:brain-outline",
+  neuro: "healthicons:neurology-outline",
   uro: "healthicons:urology-outline",
-  labs: "healthicons:biochemistry-lab-outline",
+  labs: "healthicons:biochemistry-laboratory-outline",
   radiology: "healthicons:radiology-outline",
   eye: "healthicons:opthalmology-outline",
   physio: "healthicons:physical-therapy-outline",
