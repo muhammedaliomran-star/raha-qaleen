@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import { PageShell } from "@/components/PageShell";
 import { AdsSlider } from "@/components/AdsSlider";
 import { DoctorCard } from "@/components/DoctorCard";
+import { SpecialtyPicker } from "@/components/SpecialtyPicker";
 import { supabase } from "@/integrations/supabase/client";
 import { SPECIALTIES, QALEEN_AREAS, type Doctor } from "@/lib/store";
 import heroImg from "@/assets/hero.jpg";
@@ -87,17 +88,13 @@ function HomePage() {
       <section className="mt-8"><AdsSlider /></section>
 
       <section className="mt-10">
-        <h2 className="text-xl sm:text-2xl font-extrabold mb-4">اختر التخصص</h2>
-        <div className="grid grid-cols-3 sm:grid-cols-5 gap-3 sm:gap-4">
-          {SPECIALTIES.map((s) => (
-            <Link key={s.key} to="/doctors" search={{ specialty: s.name } as never} className="glass card-hover rounded-2xl p-4 text-center">
-              <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-white/70 grid place-items-center mx-auto text-3xl sm:text-4xl">
-                <span>{s.emoji}</span>
-              </div>
-              <div className="mt-3 font-semibold text-sm sm:text-base">{s.name}</div>
-            </Link>
-          ))}
-        </div>
+        <SpecialtyPicker
+          value={specialty}
+          onChange={(name) => {
+            setSpecialty(name);
+            if (name) navigate({ to: "/doctors", search: () => ({ specialty: name }) as never });
+          }}
+        />
       </section>
 
       <section className="mt-10">

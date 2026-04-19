@@ -52,16 +52,20 @@ export interface Ad {
 }
 
 export const SPECIALTIES: Specialty[] = [
-  { key: "cardio", name: "قلب", emoji: "❤️" },
-  { key: "dental", name: "أسنان", emoji: "🦷" },
-  { key: "derma", name: "جلدية", emoji: "🧴" },
-  { key: "pediatrics", name: "أطفال", emoji: "👶" },
+  { key: "derma_laser", name: "الجلدية والليزر", emoji: "✨" },
+  { key: "surgery", name: "الجراحة", emoji: "🔪" },
+  { key: "pediatrics", name: "طب الأطفال", emoji: "👶" },
+  { key: "dental", name: "طب الأسنان", emoji: "🦷" },
+  { key: "psych", name: "نفسي", emoji: "🧠" },
+  { key: "neuro", name: "مخ وأعصاب", emoji: "🧬" },
+  { key: "uro", name: "مسالك بولية", emoji: "💧" },
+  { key: "labs", name: "معامل التحاليل", emoji: "🧪" },
+  { key: "radiology", name: "مراكز الأشعة", emoji: "📡" },
+  { key: "eye", name: "طب العيون", emoji: "👁️" },
+  { key: "physio", name: "علاج طبيعي", emoji: "🦽" },
   { key: "internal", name: "باطنة", emoji: "🩺" },
-  { key: "ortho", name: "عظام", emoji: "🦴" },
-  { key: "obgyn", name: "نساء وتوليد", emoji: "🤰" },
   { key: "ent", name: "أنف وأذن", emoji: "👂" },
-  { key: "eye", name: "رمد", emoji: "👁️" },
-  { key: "psych", name: "نفسية", emoji: "🧠" },
+  { key: "obgyn", name: "أمراض النساء", emoji: "🤰" },
 ];
 
 export const QALEEN_AREAS: string[] = [
