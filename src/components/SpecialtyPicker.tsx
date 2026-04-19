@@ -1,26 +1,26 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import {
-  Sparkles, Scissors, Baby, Bluetooth as Tooth, Brain, Activity, Droplet,
-  FlaskConical, Radio, Eye, Accessibility, Stethoscope, Ear, HeartPulse, Check,
-} from "lucide-react";
+import { Icon } from "@iconify/react";
+import { Check } from "lucide-react";
 import { SPECIALTIES } from "@/lib/store";
 
-const ICON_MAP: Record<string, React.ComponentType<{ className?: string }>> = {
-  derma_laser: Sparkles,
-  surgery: Scissors,
-  pediatrics: Baby,
-  dental: Tooth,
-  psych: Brain,
-  neuro: Activity,
-  uro: Droplet,
-  labs: FlaskConical,
-  radiology: Radio,
-  eye: Eye,
-  physio: Accessibility,
-  internal: Stethoscope,
-  ent: Ear,
-  obgyn: HeartPulse,
+// Healthicons (outline) — free, MIT/CC, unified line-art medical set
+// Browse: https://icon-sets.iconify.design/healthicons/
+const ICON_MAP: Record<string, string> = {
+  derma_laser: "healthicons:dermatology-outline",
+  surgery: "healthicons:surgical-outline",
+  pediatrics: "healthicons:baby-0306m-outline",
+  dental: "healthicons:dental-outline",
+  psych: "healthicons:mental-disorders-outline",
+  neuro: "healthicons:brain-outline",
+  uro: "healthicons:kidneys-outline",
+  labs: "healthicons:blood-tube-outline",
+  radiology: "healthicons:x-ray-outline",
+  eye: "healthicons:eye-outline",
+  physio: "healthicons:physiotherapy-outline",
+  internal: "healthicons:stethoscope-outline",
+  ent: "healthicons:ear-outline",
+  obgyn: "healthicons:pregnant-outline",
 };
 
 interface Props {
@@ -62,7 +62,7 @@ export function SpecialtyPicker({ value, onChange, title = "اختر التخص�
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
           {SPECIALTIES.map((s, i) => {
-            const Icon = ICON_MAP[s.key] ?? Stethoscope;
+            const iconName = ICON_MAP[s.key] ?? "healthicons:stethoscope-outline";
             const isSelected = selected === s.name;
             return (
               <motion.button
@@ -95,13 +95,12 @@ export function SpecialtyPicker({ value, onChange, title = "اختر التخص�
                 </span>
                 <span
                   className={`shrink-0 w-12 h-12 rounded-xl grid place-items-center transition-all duration-300 ${
-                    isSelected
-                      ? "bg-primary/10"
-                      : "bg-white/10 group-hover:bg-white/20"
+                    isSelected ? "bg-primary/10" : "bg-white/10 group-hover:bg-white/20"
                   }`}
                 >
                   <Icon
-                    className={`w-6 h-6 transition-colors ${
+                    icon={iconName}
+                    className={`w-7 h-7 transition-colors ${
                       isSelected ? "text-primary" : "text-white"
                     }`}
                   />
