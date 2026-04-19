@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import { PageShell } from "@/components/PageShell";
 import { AdsSlider } from "@/components/AdsSlider";
 import { DoctorCard } from "@/components/DoctorCard";
+import { SpecialtyPicker } from "@/components/SpecialtyPicker";
 import { supabase } from "@/integrations/supabase/client";
 import { SPECIALTIES, QALEEN_AREAS, type Doctor } from "@/lib/store";
 import heroImg from "@/assets/hero.jpg";
