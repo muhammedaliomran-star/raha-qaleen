@@ -4,20 +4,20 @@ import { Icon } from "@iconify/react";
 import { Check } from "lucide-react";
 import { SPECIALTIES } from "@/lib/store";
 
-// Healthicons (outline) — free, MIT/CC, unified line-art medical set
-// Browse: https://icon-sets.iconify.design/healthicons/
+// Healthicons (outline) — free MIT, unified line-art medical set
+// Using the official "specialties" category names from healthicons.org
 const ICON_MAP: Record<string, string> = {
   derma_laser: "healthicons:dermatology-outline",
-  surgery: "healthicons:surgical-outline",
-  pediatrics: "healthicons:baby-0306m-outline",
-  dental: "healthicons:dental-outline",
-  psych: "healthicons:mental-disorders-outline",
+  surgery: "healthicons:surgical-department-outline",
+  pediatrics: "healthicons:pediatrics-outline",
+  dental: "healthicons:dental-hygiene-outline",
+  psych: "healthicons:psychology-outline",
   neuro: "healthicons:brain-outline",
-  uro: "healthicons:kidneys-outline",
-  labs: "healthicons:blood-tube-outline",
-  radiology: "healthicons:x-ray-outline",
-  eye: "healthicons:eye-outline",
-  physio: "healthicons:physiotherapy-outline",
+  uro: "healthicons:urology-outline",
+  labs: "healthicons:biochemistry-lab-outline",
+  radiology: "healthicons:radiology-outline",
+  eye: "healthicons:opthalmology-outline",
+  physio: "healthicons:physical-therapy-outline",
   internal: "healthicons:stethoscope-outline",
   ent: "healthicons:ear-outline",
   obgyn: "healthicons:pregnant-outline",
