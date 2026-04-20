@@ -1,8 +1,9 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { ArrowRight, MapPin, Stethoscope, BadgeCheck, Star } from "lucide-react";
+import { ArrowRight, MapPin, Stethoscope, BadgeCheck, Star, Users } from "lucide-react";
 import { PageShell } from "@/components/PageShell";
 import { BookingModal } from "@/components/BookingModal";
+import { WhatsAppButton } from "@/components/WhatsAppButton";
 import { supabase } from "@/integrations/supabase/client";
 import type { Doctor } from "@/lib/store";
 
@@ -22,16 +23,16 @@ function DoctorPage() {
 
   useEffect(() => {
     supabase.from("doctors").select("*").eq("id", id).maybeSingle().then(({ data }) => {
-      if (data) setDoctor({
-        id: data.id, name: data.name, specialty: data.specialty, area: data.area,
-        price: data.price, image: data.image, times: data.times,
-      });
+      if (data) setDoctor(data as Doctor);
       setLoading(false);
     });
   }, [id]);
 
   if (loading) return <PageShell><div className="glass rounded-2xl p-10 text-center">جارٍ التحميل...</div></PageShell>;
   if (!doctor) return <PageShell><div className="glass rounded-2xl p-10 text-center">الطبيب غير موجود</div></PageShell>;
+
+  const rating = doctor.rating ?? 4.5;
+  const patients = doctor.patients_count ?? 0;
 
   return (
     <PageShell>
@@ -47,29 +48,24 @@ function DoctorPage() {
                 <span className="glass px-3 h-8 rounded-full inline-flex items-center gap-1"><Stethoscope className="w-3.5 h-3.5" /> {doctor.specialty}</span>
                 <span className="glass px-3 h-8 rounded-full inline-flex items-center gap-1"><MapPin className="w-3.5 h-3.5" /> {doctor.area}</span>
                 <span className="glass px-3 h-8 rounded-full inline-flex items-center gap-1 text-success"><BadgeCheck className="w-3.5 h-3.5" /> متاح اليوم</span>
-                <span className="glass px-3 h-8 rounded-full inline-flex items-center gap-1 text-amber-600"><Star className="w-3.5 h-3.5 fill-current" /> 4.9</span>
+                <span className="glass px-3 h-8 rounded-full inline-flex items-center gap-1 text-amber-600"><Star className="w-3.5 h-3.5 fill-current" /> {rating.toFixed(1)}</span>
+                {patients > 0 && (
+                  <span className="glass px-3 h-8 rounded-full inline-flex items-center gap-1"><Users className="w-3.5 h-3.5" /> {patients}+ مريض</span>
+                )}
               </div>
               <p className="mt-4 text-muted-foreground leading-relaxed">
-                خبرة طويلة في تقديم رعاية طبية متميزة. يستقبل المرضى يومياً بأحدث الأساليب الطبية وأفضل خدمة ممكنة.
+                {doctor.bio || "خبرة طويلة في تقديم رعاية طبية متميزة. يستقبل المرضى يومياً بأحدث الأساليب الطبية وأفضل خدمة ممكنة."}
               </p>
-            </div>
-          </div>
-
-          <div className="mt-8">
-            <h3 className="font-bold mb-3">المواعيد المتاحة اليوم</h3>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-              {doctor.times.map((t) => (
-                <div key={t} className="glass rounded-xl h-11 grid place-items-center text-sm font-medium">{t}</div>
-              ))}
             </div>
           </div>
         </div>
 
-        <div className="glass-strong rounded-3xl p-6 h-fit lg:sticky lg:top-24">
+        <div className="glass-strong rounded-3xl p-6 h-fit lg:sticky lg:top-24 space-y-3">
           <div className="text-sm text-muted-foreground">سعر الكشف</div>
           <div className="text-4xl font-extrabold text-primary mt-1">{doctor.price} <span className="text-base font-normal text-muted-foreground">ج.م</span></div>
-          <button onClick={() => setOpen(true)} className="btn-primary w-full mt-5 h-12 rounded-xl font-bold">احجز الآن</button>
-          <p className="text-xs text-muted-foreground mt-3 text-center">لن يتم خصم أي مبلغ — الدفع في العيادة</p>
+          <button onClick={() => setOpen(true)} className="btn-primary w-full h-12 rounded-xl font-bold">احجز الآن</button>
+          <WhatsAppButton phone={doctor.whatsapp_number} doctorName={doctor.name} className="w-full" />
+          <p className="text-xs text-muted-foreground text-center">لن يتم خصم أي مبلغ — الدفع في العيادة</p>
         </div>
       </div>
 
