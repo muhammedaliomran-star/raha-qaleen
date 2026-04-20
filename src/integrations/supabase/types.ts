@@ -49,9 +49,11 @@ export type Database = {
       }
       bookings: {
         Row: {
+          availability_id: string | null
           booking_type: Database["public"]["Enums"]["booking_type"]
           created_at: string
           date: string
+          date_iso: string | null
           doctor_id: string
           doctor_name: string
           id: string
@@ -61,9 +63,11 @@ export type Database = {
           time: string
         }
         Insert: {
+          availability_id?: string | null
           booking_type?: Database["public"]["Enums"]["booking_type"]
           created_at?: string
           date: string
+          date_iso?: string | null
           doctor_id: string
           doctor_name: string
           id?: string
@@ -73,9 +77,11 @@ export type Database = {
           time: string
         }
         Update: {
+          availability_id?: string | null
           booking_type?: Database["public"]["Enums"]["booking_type"]
           created_at?: string
           date?: string
+          date_iso?: string | null
           doctor_id?: string
           doctor_name?: string
           id?: string
@@ -86,7 +92,59 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "bookings_availability_id_fkey"
+            columns: ["availability_id"]
+            isOneToOne: false
+            referencedRelation: "doctor_availability"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "bookings_doctor_id_fkey"
+            columns: ["doctor_id"]
+            isOneToOne: false
+            referencedRelation: "doctors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      doctor_availability: {
+        Row: {
+          booking_id: string | null
+          created_at: string
+          date: string
+          doctor_id: string
+          id: string
+          is_booked: boolean
+          time: string
+        }
+        Insert: {
+          booking_id?: string | null
+          created_at?: string
+          date: string
+          doctor_id: string
+          id?: string
+          is_booked?: boolean
+          time: string
+        }
+        Update: {
+          booking_id?: string | null
+          created_at?: string
+          date?: string
+          doctor_id?: string
+          id?: string
+          is_booked?: boolean
+          time?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "doctor_availability_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "doctor_availability_doctor_id_fkey"
             columns: ["doctor_id"]
             isOneToOne: false
             referencedRelation: "doctors"
@@ -97,33 +155,51 @@ export type Database = {
       doctors: {
         Row: {
           area: string
+          bio: string
+          city: string
           created_at: string
+          governorate: string
           id: string
           image: string
           name: string
+          patients_count: number
           price: number
+          rating: number
           specialty: string
           times: string[]
+          whatsapp_number: string | null
         }
         Insert: {
           area: string
+          bio?: string
+          city?: string
           created_at?: string
+          governorate?: string
           id?: string
           image?: string
           name: string
+          patients_count?: number
           price?: number
+          rating?: number
           specialty: string
           times?: string[]
+          whatsapp_number?: string | null
         }
         Update: {
           area?: string
+          bio?: string
+          city?: string
           created_at?: string
+          governorate?: string
           id?: string
           image?: string
           name?: string
+          patients_count?: number
           price?: number
+          rating?: number
           specialty?: string
           times?: string[]
+          whatsapp_number?: string | null
         }
         Relationships: []
       }
@@ -186,12 +262,23 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      book_slot: {
+        Args: {
+          _availability_id: string
+          _booking_type?: Database["public"]["Enums"]["booking_type"]
+        }
+        Returns: string
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
           _user_id: string
         }
         Returns: boolean
+      }
+      seed_availability_for_all: {
+        Args: { _days?: number }
+        Returns: undefined
       }
     }
     Enums: {
