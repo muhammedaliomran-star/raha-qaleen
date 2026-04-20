@@ -87,6 +87,31 @@ function HomePage() {
 
       <section className="mt-8"><AdsSlider /></section>
 
+      {/* AI Symptom Checker promo */}
+      <section className="mt-8">
+        <Link
+          to="/symptom-checker"
+          className="block group glass-strong rounded-3xl p-6 sm:p-8 relative overflow-hidden hover:shadow-glass-lg transition"
+        >
+          <div className="absolute -top-10 -left-10 w-48 h-48 bg-primary/20 rounded-full blur-3xl pointer-events-none" />
+          <div className="absolute -bottom-10 -right-10 w-48 h-48 bg-primary/10 rounded-full blur-3xl pointer-events-none" />
+          <div className="relative grid sm:grid-cols-[1fr_auto] gap-4 items-center">
+            <div>
+              <span className="inline-flex items-center gap-1 glass px-3 h-8 rounded-full text-xs font-bold text-primary">
+                <Sparkles className="w-3.5 h-3.5" /> جديد — مدعوم بالذكاء الاصطناعي
+              </span>
+              <h3 className="mt-3 text-xl sm:text-2xl font-extrabold">مش عارف تروح لأنهي دكتور؟</h3>
+              <p className="mt-1 text-sm sm:text-base text-muted-foreground max-w-xl">
+                اكتب أعراضك وسنقترح لك التخصص المناسب فوراً — مع عرض الأطباء المتاحين
+              </p>
+            </div>
+            <div className="btn-primary h-12 px-6 rounded-xl font-bold inline-flex items-center justify-center gap-2 group-hover:scale-105 transition">
+              <Sparkles className="w-4 h-4" /> جرّب الآن
+            </div>
+          </div>
+        </Link>
+      </section>
+
       <section className="mt-10">
         <SpecialtyPicker
           value={specialty}
