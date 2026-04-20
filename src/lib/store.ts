@@ -27,6 +27,20 @@ export interface Doctor {
   price: number;
   image: string;
   times: string[];
+  whatsapp_number?: string;
+  rating?: number;
+  patients_count?: number;
+  city?: string;
+  governorate?: string;
+  bio?: string;
+}
+
+export interface AvailabilitySlot {
+  id: string;
+  doctor_id: string;
+  date: string; // YYYY-MM-DD
+  time: string;
+  is_booked: boolean;
 }
 
 export interface Booking {

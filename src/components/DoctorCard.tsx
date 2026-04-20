@@ -1,6 +1,7 @@
 import { Link } from "@tanstack/react-router";
-import { MapPin, BadgeCheck } from "lucide-react";
+import { MapPin, BadgeCheck, Star, Users } from "lucide-react";
 import { getSpecialtyMeta, type Doctor } from "@/lib/store";
+import { WhatsAppButton } from "@/components/WhatsAppButton";
 
 export function DoctorCard({ doctor }: { doctor: Doctor }) {
   const meta = getSpecialtyMeta(doctor.specialty);
@@ -23,12 +24,22 @@ export function DoctorCard({ doctor }: { doctor: Doctor }) {
         </span>
       </div>
       <div className="mt-4 flex-1">
-        <h3 className="font-bold text-lg text-foreground">{doctor.name}</h3>
+        <h3 className="font-bold text-lg text-foreground line-clamp-1">{doctor.name}</h3>
         <div className="mt-1 flex items-center gap-1 text-sm text-muted-foreground">
           <span>{meta.emoji}</span> {doctor.specialty}
         </div>
         <div className="mt-1 flex items-center gap-1 text-sm text-muted-foreground">
           <MapPin className="w-4 h-4" /> {doctor.area}
+        </div>
+        <div className="mt-2 flex items-center gap-3 text-xs">
+          <span className="inline-flex items-center gap-1 text-amber-600">
+            <Star className="w-3.5 h-3.5 fill-current" /> {(doctor.rating ?? 4.5).toFixed(1)}
+          </span>
+          {!!doctor.patients_count && (
+            <span className="inline-flex items-center gap-1 text-muted-foreground">
+              <Users className="w-3.5 h-3.5" /> {doctor.patients_count}+ مريض
+            </span>
+          )}
         </div>
       </div>
       <div className="mt-4 flex items-center justify-between">
@@ -41,6 +52,9 @@ export function DoctorCard({ doctor }: { doctor: Doctor }) {
           احجز الآن
         </Link>
       </div>
+      {doctor.whatsapp_number && (
+        <WhatsAppButton phone={doctor.whatsapp_number} doctorName={doctor.name} className="mt-2 w-full" />
+      )}
     </div>
   );
 }
