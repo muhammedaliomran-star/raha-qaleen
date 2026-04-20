@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as SymptomCheckerRouteImport } from './routes/symptom-checker'
 import { Route as SignupRouteImport } from './routes/signup'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as DoctorsRouteImport } from './routes/doctors'
@@ -19,6 +20,11 @@ import { Route as DashboardPatientRouteImport } from './routes/dashboard.patient
 import { Route as DashboardDoctorRouteImport } from './routes/dashboard.doctor'
 import { Route as DashboardAdminRouteImport } from './routes/dashboard.admin'
 
+const SymptomCheckerRoute = SymptomCheckerRouteImport.update({
+  id: '/symptom-checker',
+  path: '/symptom-checker',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SignupRoute = SignupRouteImport.update({
   id: '/signup',
   path: '/signup',
@@ -70,6 +76,7 @@ export interface FileRoutesByFullPath {
   '/doctors': typeof DoctorsRoute
   '/login': typeof LoginRoute
   '/signup': typeof SignupRoute
+  '/symptom-checker': typeof SymptomCheckerRoute
   '/dashboard/admin': typeof DashboardAdminRoute
   '/dashboard/doctor': typeof DashboardDoctorRoute
   '/dashboard/patient': typeof DashboardPatientRoute
@@ -81,6 +88,7 @@ export interface FileRoutesByTo {
   '/doctors': typeof DoctorsRoute
   '/login': typeof LoginRoute
   '/signup': typeof SignupRoute
+  '/symptom-checker': typeof SymptomCheckerRoute
   '/dashboard/admin': typeof DashboardAdminRoute
   '/dashboard/doctor': typeof DashboardDoctorRoute
   '/dashboard/patient': typeof DashboardPatientRoute
@@ -93,6 +101,7 @@ export interface FileRoutesById {
   '/doctors': typeof DoctorsRoute
   '/login': typeof LoginRoute
   '/signup': typeof SignupRoute
+  '/symptom-checker': typeof SymptomCheckerRoute
   '/dashboard/admin': typeof DashboardAdminRoute
   '/dashboard/doctor': typeof DashboardDoctorRoute
   '/dashboard/patient': typeof DashboardPatientRoute
@@ -106,6 +115,7 @@ export interface FileRouteTypes {
     | '/doctors'
     | '/login'
     | '/signup'
+    | '/symptom-checker'
     | '/dashboard/admin'
     | '/dashboard/doctor'
     | '/dashboard/patient'
@@ -117,6 +127,7 @@ export interface FileRouteTypes {
     | '/doctors'
     | '/login'
     | '/signup'
+    | '/symptom-checker'
     | '/dashboard/admin'
     | '/dashboard/doctor'
     | '/dashboard/patient'
@@ -128,6 +139,7 @@ export interface FileRouteTypes {
     | '/doctors'
     | '/login'
     | '/signup'
+    | '/symptom-checker'
     | '/dashboard/admin'
     | '/dashboard/doctor'
     | '/dashboard/patient'
@@ -140,6 +152,7 @@ export interface RootRouteChildren {
   DoctorsRoute: typeof DoctorsRoute
   LoginRoute: typeof LoginRoute
   SignupRoute: typeof SignupRoute
+  SymptomCheckerRoute: typeof SymptomCheckerRoute
   DashboardAdminRoute: typeof DashboardAdminRoute
   DashboardDoctorRoute: typeof DashboardDoctorRoute
   DashboardPatientRoute: typeof DashboardPatientRoute
@@ -149,6 +162,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/symptom-checker': {
+      id: '/symptom-checker'
+      path: '/symptom-checker'
+      fullPath: '/symptom-checker'
+      preLoaderRoute: typeof SymptomCheckerRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/signup': {
       id: '/signup'
       path: '/signup'
@@ -220,6 +240,7 @@ const rootRouteChildren: RootRouteChildren = {
   DoctorsRoute: DoctorsRoute,
   LoginRoute: LoginRoute,
   SignupRoute: SignupRoute,
+  SymptomCheckerRoute: SymptomCheckerRoute,
   DashboardAdminRoute: DashboardAdminRoute,
   DashboardDoctorRoute: DashboardDoctorRoute,
   DashboardPatientRoute: DashboardPatientRoute,

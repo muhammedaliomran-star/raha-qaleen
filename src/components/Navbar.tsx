@@ -1,6 +1,6 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useAuth } from "@/lib/auth";
-import { LogOut, LayoutDashboard, Stethoscope } from "lucide-react";
+import { LogOut, LayoutDashboard, Stethoscope, Sparkles } from "lucide-react";
 
 export function Navbar() {
   const { user, profile, primaryRole, logout } = useAuth();
@@ -28,6 +28,9 @@ export function Navbar() {
         <div className="hidden md:flex items-center gap-6 text-sm">
           <Link to="/" className="text-foreground/80 hover:text-primary transition">الرئيسية</Link>
           <Link to="/doctors" className="text-foreground/80 hover:text-primary transition">الأطباء</Link>
+          <Link to="/symptom-checker" className="text-foreground/80 hover:text-primary transition inline-flex items-center gap-1">
+            <Sparkles className="w-3.5 h-3.5 text-primary" /> محلل الأعراض
+          </Link>
         </div>
 
         <div className="flex items-center gap-2">
