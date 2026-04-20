@@ -2,6 +2,7 @@ import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { z } from "zod";
 import { PageShell } from "@/components/PageShell";
+import { GoogleButton } from "@/components/GoogleButton";
 import { supabase } from "@/integrations/supabase/client";
 import type { Role } from "@/lib/store";
 
@@ -134,6 +135,14 @@ function SignupPage() {
               {loading ? "جارٍ إنشاء الحساب..." : "إنشاء الحساب"}
             </button>
           </form>
+
+          <div className="my-4 flex items-center gap-3 text-xs text-muted-foreground">
+            <div className="h-px bg-border flex-1" />
+            <span>أو</span>
+            <div className="h-px bg-border flex-1" />
+          </div>
+          <GoogleButton label="التسجيل باستخدام Google" />
+
           <div className="mt-4 text-center text-sm text-muted-foreground">
             لديك حساب؟ <Link to="/login" className="text-primary font-semibold">تسجيل الدخول</Link>
           </div>

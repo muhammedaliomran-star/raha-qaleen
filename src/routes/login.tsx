@@ -1,6 +1,7 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { PageShell } from "@/components/PageShell";
+import { GoogleButton } from "@/components/GoogleButton";
 import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/login")({
@@ -55,6 +56,14 @@ function LoginPage() {
               {loading ? "جارٍ الدخول..." : "دخول"}
             </button>
           </form>
+
+          <div className="my-4 flex items-center gap-3 text-xs text-muted-foreground">
+            <div className="h-px bg-border flex-1" />
+            <span>أو</span>
+            <div className="h-px bg-border flex-1" />
+          </div>
+          <GoogleButton />
+
           <div className="mt-4 text-center text-sm text-muted-foreground">
             ليس لديك حساب؟ <Link to="/signup" className="text-primary font-semibold">إنشاء حساب</Link>
           </div>
