@@ -26,9 +26,12 @@ export const Route = createRootRoute({
       { property: "og:title", content: "RAHA — QALEEN" },
       { property: "og:description", content: "احجز طبيبك في ثوانٍ — تصميم فاخر، تجربة سلسة." },
       { property: "og:type", content: "website" },
+      { property: "og:image", content: "/logo.png" },
     ],
     links: [
       { rel: "stylesheet", href: appCss },
+      { rel: "icon", type: "image/png", href: "/logo.png" },
+      { rel: "apple-touch-icon", href: "/logo.png" },
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
       { rel: "stylesheet", href: "https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&display=swap" },
