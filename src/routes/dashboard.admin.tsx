@@ -80,12 +80,22 @@ function AdminDash() {
       <h1 className="text-2xl sm:text-3xl font-extrabold">لوحة الأدمن</h1>
       <p className="text-muted-foreground mt-1">تحكم كامل بالمنصة</p>
 
-      <div className="glass mt-6 rounded-2xl p-2 flex flex-wrap gap-1">
-        {tabs.map((t) => (
-          <button key={t.id} onClick={() => setTab(t.id)} className={`px-4 h-10 rounded-xl text-sm font-semibold inline-flex items-center gap-2 transition ${tab===t.id?"btn-primary":"hover:bg-white/60"}`}>
-            {t.icon} {t.label}
-          </button>
-        ))}
+      <div className="glass mt-6 rounded-2xl p-2 overflow-x-auto scrollbar-none">
+        <div className="flex gap-1 min-w-max">
+          {tabs.map((t) => (
+            <button
+              key={t.id}
+              onClick={() => setTab(t.id)}
+              className={`px-4 h-11 rounded-xl text-sm font-semibold inline-flex items-center gap-2 whitespace-nowrap transition-all ${
+                tab === t.id
+                  ? "btn-primary shadow-md scale-[1.02]"
+                  : "hover:bg-white/70 text-foreground/70 hover:text-foreground"
+              }`}
+            >
+              {t.icon} {t.label}
+            </button>
+          ))}
+        </div>
       </div>
 
       <div className="mt-6">
