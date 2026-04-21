@@ -41,7 +41,7 @@ function HomePage() {
       {/* HERO */}
       <section className="gradient-bg-hero rounded-3xl overflow-hidden glass-strong">
         <div className="grid lg:grid-cols-2 gap-6 p-6 sm:p-10 items-center">
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }} className="order-2 lg:order-1">
             <span className="inline-flex items-center gap-1 glass px-3 h-8 rounded-full text-xs font-semibold text-primary">
               <Sparkles className="w-3.5 h-3.5" /> منصة الحجز الأولى في قلين
             </span>
@@ -79,7 +79,7 @@ function HomePage() {
             </div>
           </motion.div>
 
-          <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.7, delay: 0.1 }}>
+          <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.7, delay: 0.1 }} className="order-1 lg:order-2">
             <img src={heroImg} alt="أطباء RAHA قلين" width={1536} height={1024} className="w-full h-72 sm:h-96 object-cover rounded-2xl shadow-glass-lg" />
           </motion.div>
         </div>
