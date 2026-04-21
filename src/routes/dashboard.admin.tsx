@@ -161,49 +161,158 @@ function DataTable({ headers, children }: { headers: string[]; children: React.R
 }
 
 function AdsManager({ ads, onChange }: { ads: Ad[]; onChange: () => void }) {
-  const [form, setForm] = useState({ title: "", description: "", cta: "احجز الآن", image: "" });
+  const emptyForm = { title: "", description: "", cta: "احجز الآن", image: "" };
+  const [form, setForm] = useState(emptyForm);
+  const [uploading, setUploading] = useState(false);
+  const [error, setError] = useState("");
+
+  const uploadImage = async (file: File): Promise<string | null> => {
+    setError("");
+    setUploading(true);
+    try {
+      const ext = file.name.split(".").pop() || "jpg";
+      const path = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+      const { error: upErr } = await supabase.storage.from("ads").upload(path, file, { upsert: false });
+      if (upErr) { setError(upErr.message); return null; }
+      const { data } = supabase.storage.from("ads").getPublicUrl(path);
+      return data.publicUrl;
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const onPickFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const url = await uploadImage(file);
+    if (url) setForm((f) => ({ ...f, image: url }));
+    e.target.value = "";
+  };
 
   const addAd = async () => {
-    if (!form.title || !form.image) return;
-    await supabase.from("ads").insert({
-      title: form.title, description: form.description, cta: form.cta,
+    setError("");
+    if (!form.title || !form.image) { setError("أضف العنوان والصورة"); return; }
+    const { error: err } = await supabase.from("ads").insert({
+      title: form.title, description: form.description, cta: form.cta || "احجز الآن",
       image: form.image, is_active: true, order: ads.length + 1,
     });
-    setForm({ title: "", description: "", cta: "احجز الآن", image: "" });
+    if (err) { setError(err.message); return; }
+    setForm(emptyForm);
     onChange();
   };
-  const update = async (id: string, patch: { is_active?: boolean }) => {
-    await supabase.from("ads").update(patch).eq("id", id); onChange();
+
+  const update = async (id: string, patch: Partial<{ is_active: boolean; title: string; description: string; cta: string; image: string; order: number }>) => {
+    await supabase.from("ads").update(patch).eq("id", id);
+    onChange();
   };
-  const remove = async (id: string) => { await supabase.from("ads").delete().eq("id", id); onChange(); };
+
+  const replaceImage = async (id: string, file: File) => {
+    const url = await uploadImage(file);
+    if (url) await update(id, { image: url });
+  };
+
+  const move = async (a: Ad, dir: -1 | 1) => {
+    const sorted = [...ads].sort((x, y) => x.order - y.order);
+    const idx = sorted.findIndex((x) => x.id === a.id);
+    const swap = sorted[idx + dir];
+    if (!swap) return;
+    await Promise.all([
+      supabase.from("ads").update({ order: swap.order }).eq("id", a.id),
+      supabase.from("ads").update({ order: a.order }).eq("id", swap.id),
+    ]);
+    onChange();
+  };
+
+  const remove = async (id: string) => {
+    if (!confirm("حذف هذا الإعلان؟")) return;
+    await supabase.from("ads").delete().eq("id", id);
+    onChange();
+  };
 
   return (
     <div className="space-y-6">
-      <div className="glass-strong rounded-2xl p-4 grid sm:grid-cols-5 gap-2">
-        <input value={form.title} onChange={(e)=>setForm({...form,title:e.target.value})} placeholder="العنوان" className="glass-input h-11 rounded-xl px-3 text-sm sm:col-span-1" />
-        <input value={form.description} onChange={(e)=>setForm({...form,description:e.target.value})} placeholder="الوصف" className="glass-input h-11 rounded-xl px-3 text-sm sm:col-span-2" />
-        <input value={form.image} onChange={(e)=>setForm({...form,image:e.target.value})} placeholder="رابط الصورة" className="glass-input h-11 rounded-xl px-3 text-sm" />
-        <button onClick={addAd} className="btn-primary h-11 rounded-xl font-bold inline-flex items-center justify-center gap-1"><Plus className="w-4 h-4" /> إضافة</button>
+      {/* Add new ad */}
+      <div className="glass-strong rounded-2xl p-4 space-y-3">
+        <h3 className="font-bold flex items-center gap-2"><Plus className="w-4 h-4" /> إضافة إعلان جديد</h3>
+        <div className="grid sm:grid-cols-3 gap-2">
+          <input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="العنوان" className="glass-input h-11 rounded-xl px-3 text-sm" />
+          <input value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder="الوصف" className="glass-input h-11 rounded-xl px-3 text-sm sm:col-span-2" />
+          <input value={form.cta} onChange={(e) => setForm({ ...form, cta: e.target.value })} placeholder="نص الزر" className="glass-input h-11 rounded-xl px-3 text-sm" />
+          <label className="glass-input h-11 rounded-xl px-3 text-sm inline-flex items-center justify-center gap-2 cursor-pointer sm:col-span-2 hover:bg-white/60 transition">
+            {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+            {form.image ? "تم رفع الصورة ✓ (اضغط لتغييرها)" : "ارفع صورة الإعلان"}
+            <input type="file" accept="image/*" className="hidden" onChange={onPickFile} disabled={uploading} />
+          </label>
+        </div>
+        {form.image && <img src={form.image} alt="" className="w-full h-32 object-cover rounded-xl" />}
+        {error && <div className="text-destructive text-sm">{error}</div>}
+        <button onClick={addAd} disabled={uploading} className="btn-primary h-11 px-6 rounded-xl font-bold inline-flex items-center gap-2 disabled:opacity-50">
+          <Plus className="w-4 h-4" /> إضافة الإعلان
+        </button>
       </div>
 
-      <div className="grid sm:grid-cols-2 gap-4">
-        {ads.map((a) => (
-          <div key={a.id} className="glass rounded-2xl overflow-hidden">
-            <img src={a.image} alt={a.title} className="w-full h-32 object-cover" />
-            <div className="p-4">
-              <div className="flex items-center justify-between gap-2">
-                <div>
-                  <div className="font-bold">{a.title}</div>
-                  <div className="text-xs text-muted-foreground">{a.description}</div>
-                </div>
-                <button onClick={()=>remove(a.id)} className="text-destructive"><Trash2 className="w-4 h-4" /></button>
-              </div>
-              <div className="mt-3 flex items-center gap-2 text-xs">
-                <label className="flex items-center gap-1"><input type="checkbox" checked={a.isActive} onChange={(e)=>update(a.id,{is_active:e.target.checked})} /> نشط</label>
-              </div>
-            </div>
+      {/* Existing ads */}
+      {ads.length === 0 ? (
+        <div className="glass rounded-2xl p-10 text-center text-muted-foreground">لا توجد إعلانات بعد</div>
+      ) : (
+        <div className="grid sm:grid-cols-2 gap-4">
+          {ads.map((a) => <AdCard key={a.id} ad={a} onUpdate={update} onReplaceImage={replaceImage} onRemove={remove} onMove={move} uploading={uploading} />)}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function AdCard({
+  ad, onUpdate, onReplaceImage, onRemove, onMove, uploading,
+}: {
+  ad: Ad;
+  onUpdate: (id: string, patch: Partial<{ is_active: boolean; title: string; description: string; cta: string }>) => Promise<void>;
+  onReplaceImage: (id: string, file: File) => Promise<void>;
+  onRemove: (id: string) => Promise<void>;
+  onMove: (a: Ad, dir: -1 | 1) => Promise<void>;
+  uploading: boolean;
+}) {
+  const [edit, setEdit] = useState({ title: ad.title, description: ad.description, cta: ad.cta });
+  const [saving, setSaving] = useState(false);
+  const dirty = edit.title !== ad.title || edit.description !== ad.description || edit.cta !== ad.cta;
+
+  const save = async () => {
+    setSaving(true);
+    await onUpdate(ad.id, edit);
+    setSaving(false);
+  };
+
+  return (
+    <div className="glass rounded-2xl overflow-hidden">
+      <div className="relative">
+        <img src={ad.image} alt={ad.title} className="w-full h-40 object-cover" />
+        <label className="absolute top-2 right-2 glass-strong h-9 px-3 rounded-lg text-xs font-bold inline-flex items-center gap-1 cursor-pointer hover:bg-white/90 transition">
+          <Upload className="w-3.5 h-3.5" /> تغيير
+          <input type="file" accept="image/*" className="hidden" disabled={uploading} onChange={(e) => { const f = e.target.files?.[0]; if (f) void onReplaceImage(ad.id, f); e.target.value = ""; }} />
+        </label>
+        <div className="absolute top-2 left-2 flex flex-col gap-1">
+          <button onClick={() => onMove(ad, -1)} className="glass-strong w-8 h-8 rounded-lg grid place-items-center hover:bg-white/90"><ArrowUp className="w-3.5 h-3.5" /></button>
+          <button onClick={() => onMove(ad, 1)} className="glass-strong w-8 h-8 rounded-lg grid place-items-center hover:bg-white/90"><ArrowDown className="w-3.5 h-3.5" /></button>
+        </div>
+      </div>
+      <div className="p-4 space-y-2">
+        <input value={edit.title} onChange={(e) => setEdit({ ...edit, title: e.target.value })} className="glass-input h-10 w-full rounded-lg px-3 text-sm font-bold" placeholder="العنوان" />
+        <textarea value={edit.description} onChange={(e) => setEdit({ ...edit, description: e.target.value })} rows={2} className="glass-input w-full rounded-lg px-3 py-2 text-sm" placeholder="الوصف" />
+        <input value={edit.cta} onChange={(e) => setEdit({ ...edit, cta: e.target.value })} className="glass-input h-10 w-full rounded-lg px-3 text-sm" placeholder="نص الزر" />
+        <div className="flex items-center justify-between gap-2 pt-2">
+          <label className="flex items-center gap-1 text-xs cursor-pointer">
+            <input type="checkbox" checked={ad.isActive} onChange={(e) => onUpdate(ad.id, { is_active: e.target.checked })} /> نشط
+          </label>
+          <div className="flex gap-1">
+            {dirty && (
+              <button onClick={save} disabled={saving} className="btn-primary h-9 px-3 rounded-lg text-xs font-bold inline-flex items-center gap-1 disabled:opacity-50">
+                {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />} حفظ
+              </button>
+            )}
+            <button onClick={() => onRemove(ad.id)} className="glass h-9 w-9 rounded-lg grid place-items-center text-destructive hover:bg-destructive/10"><Trash2 className="w-4 h-4" /></button>
           </div>
-        ))}
+        </div>
       </div>
     </div>
   );
