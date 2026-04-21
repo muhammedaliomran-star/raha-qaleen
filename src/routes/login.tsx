@@ -3,6 +3,7 @@ import { useState } from "react";
 import { PageShell } from "@/components/PageShell";
 import { GoogleButton } from "@/components/GoogleButton";
 import { supabase } from "@/integrations/supabase/client";
+import logo from "@/assets/logo.png";
 
 export const Route = createFileRoute("/login")({
   head: () => ({ meta: [{ title: "تسجيل الدخول | RAHA" }] }),
@@ -40,6 +41,7 @@ function LoginPage() {
     <PageShell>
       <div className="max-w-md mx-auto">
         <div className="glass-strong rounded-3xl p-8">
+          <img src={logo} alt="RAHA Clinics" width={72} height={72} className="w-18 h-18 object-contain mx-auto mb-3" />
           <h1 className="text-2xl font-extrabold text-center">تسجيل الدخول</h1>
           <p className="text-sm text-muted-foreground text-center mt-1">مرحباً بعودتك إلى RAHA</p>
           <form onSubmit={submit} className="mt-6 space-y-3">
