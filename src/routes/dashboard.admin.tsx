@@ -19,7 +19,7 @@ export const Route = createFileRoute("/dashboard/admin")({
   component: () => <RoleGuard allow={["admin"]}><AdminDash /></RoleGuard>,
 });
 
-type Tab = "stats" | "users" | "doctors" | "bookings" | "ads";
+type Tab = "stats" | "users" | "doctors" | "schedule" | "bookings" | "ads";
 
 interface ProfileRow {
   id: string;
@@ -85,6 +85,7 @@ function AdminDash() {
     { id: "stats", label: "الإحصائيات", icon: <CalendarCheck className="w-4 h-4" /> },
     { id: "users", label: "المستخدمون", icon: <Users className="w-4 h-4" /> },
     { id: "doctors", label: "الأطباء", icon: <Stethoscope className="w-4 h-4" /> },
+    { id: "schedule", label: "المواعيد", icon: <Clock className="w-4 h-4" /> },
     { id: "bookings", label: "الحجوزات", icon: <CalendarCheck className="w-4 h-4" /> },
     { id: "ads", label: "الإعلانات", icon: <Megaphone className="w-4 h-4" /> },
   ];
