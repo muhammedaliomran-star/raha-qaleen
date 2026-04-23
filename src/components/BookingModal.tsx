@@ -84,6 +84,8 @@ export function BookingModal({ doctor, open, onClose }: { doctor: Doctor; open: 
       });
       if (error) {
         if (error.message.includes("slot_already_booked")) toast.error("عفواً، هذا الموعد تم حجزه للتو");
+        else if (error.message.includes("slot_full")) toast.error("عفواً، هذا الموعد امتلأ");
+        else if (error.message.includes("slot_disabled")) toast.error("هذا الموعد غير متاح حالياً");
         else if (error.message.includes("auth_required")) toast.error("سجّل الدخول أولاً");
         else toast.error("حدث خطأ أثناء الحجز");
         return;
