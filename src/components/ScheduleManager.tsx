@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import {
   Clock, Users, Plus, Trash2, Copy, RefreshCw, Loader2, Power,
-  CalendarDays, ChevronLeft, ChevronRight, AlertCircle, CheckCircle2,
+  CalendarDays, AlertCircle, CheckCircle2,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import type { Doctor } from "@/lib/store";
