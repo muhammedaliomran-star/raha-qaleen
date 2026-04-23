@@ -473,7 +473,7 @@ function DoctorsManager({ doctors, onChange }: { doctors: Doctor[]; onChange: ()
               </select>
             </FloatingField>
 
-            <FloatingField label="السعر (ج.م)" icon={<DollarSign className="w-4 h-4" />} error={errors.price}>
+            <FloatingField label="السعر (ج.م)" icon={<Banknote className="w-4 h-4" />} error={errors.price}>
               <input type="number" min={0} value={form.price}
                 onChange={(e) => setForm({ ...form, price: e.target.value })}
                 className="floating-input" placeholder=" " />
