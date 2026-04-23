@@ -59,6 +59,12 @@ function AdminDash() {
     setDoctors((doctorsRes.data ?? []).map((d) => ({
       id: d.id, name: d.name, specialty: d.specialty, area: d.area,
       price: d.price, image: d.image, times: d.times,
+      whatsapp_number: d.whatsapp_number ?? "",
+      bio: d.bio ?? "",
+      degree: (d.degree as DoctorDegree) ?? "specialist",
+      phone: (d as { phone?: string }).phone ?? "",
+      address: (d as { address?: string }).address ?? "",
+      is_active: (d as { is_active?: boolean }).is_active ?? true,
     })));
     setBookings((bookingsRes.data ?? []).map((b) => ({
       id: b.id, doctorId: b.doctor_id, doctorName: b.doctor_name,
