@@ -109,30 +109,39 @@ export type Database = {
       }
       doctor_availability: {
         Row: {
+          booked_count: number
           booking_id: string | null
+          capacity: number
           created_at: string
           date: string
           doctor_id: string
           id: string
           is_booked: boolean
+          is_disabled: boolean
           time: string
         }
         Insert: {
+          booked_count?: number
           booking_id?: string | null
+          capacity?: number
           created_at?: string
           date: string
           doctor_id: string
           id?: string
           is_booked?: boolean
+          is_disabled?: boolean
           time: string
         }
         Update: {
+          booked_count?: number
           booking_id?: string | null
+          capacity?: number
           created_at?: string
           date?: string
           doctor_id?: string
           id?: string
           is_booked?: boolean
+          is_disabled?: boolean
           time?: string
         }
         Relationships: [
@@ -269,17 +278,73 @@ export type Database = {
         }
         Relationships: []
       }
+      weekly_schedule: {
+        Row: {
+          capacity: number
+          created_at: string
+          doctor_id: string
+          end_time: string
+          id: string
+          is_enabled: boolean
+          slot_minutes: number
+          start_time: string
+          weekday: number
+        }
+        Insert: {
+          capacity?: number
+          created_at?: string
+          doctor_id: string
+          end_time: string
+          id?: string
+          is_enabled?: boolean
+          slot_minutes?: number
+          start_time: string
+          weekday: number
+        }
+        Update: {
+          capacity?: number
+          created_at?: string
+          doctor_id?: string
+          end_time?: string
+          id?: string
+          is_enabled?: boolean
+          slot_minutes?: number
+          start_time?: string
+          weekday?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "weekly_schedule_doctor_id_fkey"
+            columns: ["doctor_id"]
+            isOneToOne: false
+            referencedRelation: "doctors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
+      apply_weekly_schedule: {
+        Args: { _days?: number; _doctor_id: string }
+        Returns: undefined
+      }
       book_slot: {
         Args: {
           _availability_id: string
           _booking_type?: Database["public"]["Enums"]["booking_type"]
         }
         Returns: string
+      }
+      copy_weekday_schedule: {
+        Args: {
+          _doctor_id: string
+          _from_weekday: number
+          _to_weekdays: number[]
+        }
+        Returns: undefined
       }
       has_role: {
         Args: {
