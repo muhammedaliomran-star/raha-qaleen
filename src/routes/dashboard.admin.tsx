@@ -7,6 +7,7 @@ import {
 } from "lucide-react";
 import { PageShell } from "@/components/PageShell";
 import { RoleGuard } from "@/components/RoleGuard";
+import { ScheduleManager } from "@/components/ScheduleManager";
 import { supabase } from "@/integrations/supabase/client";
 import {
   SPECIALTIES, QALEEN_AREAS, ROLE_LABEL, DEGREE_LABEL,
