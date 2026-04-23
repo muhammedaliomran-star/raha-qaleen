@@ -141,6 +141,8 @@ function AdminDash() {
 
         {tab === "doctors" && <DoctorsManager doctors={doctors} onChange={refresh} />}
 
+        {tab === "schedule" && <ScheduleManager doctors={doctors} />}
+
         {tab === "bookings" && (
           <DataTable headers={["المريض","الطبيب","النوع","التاريخ","الموعد",""]}>
             {bookings.map((b) => (
