@@ -1,10 +1,17 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
-import { Users, Stethoscope, CalendarCheck, Megaphone, Trash2, Plus, Upload, Save, ArrowUp, ArrowDown, Loader2, MapPin, DollarSign, Clock, User as UserIcon, ImageIcon } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import {
+  Users, Stethoscope, CalendarCheck, Megaphone, Trash2, Plus, Upload, Save,
+  ArrowUp, ArrowDown, Loader2, MapPin, Clock, User as UserIcon,
+  Search, Pencil, X, Phone, Home, GraduationCap, FileText, AlertTriangle, Banknote,
+} from "lucide-react";
 import { PageShell } from "@/components/PageShell";
 import { RoleGuard } from "@/components/RoleGuard";
 import { supabase } from "@/integrations/supabase/client";
-import { SPECIALTIES, QALEEN_AREAS, ROLE_LABEL, type Ad, type Booking, type Doctor, type Role } from "@/lib/store";
+import {
+  SPECIALTIES, QALEEN_AREAS, ROLE_LABEL, DEGREE_LABEL,
+  type Ad, type Booking, type Doctor, type Role, type DoctorDegree,
+} from "@/lib/store";
 
 export const Route = createFileRoute("/dashboard/admin")({
   head: () => ({ meta: [{ title: "لوحة الأدمن | RAHA" }] }),
