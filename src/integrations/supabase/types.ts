@@ -154,15 +154,19 @@ export type Database = {
       }
       doctors: {
         Row: {
+          address: string
           area: string
           bio: string
           city: string
           created_at: string
+          degree: Database["public"]["Enums"]["doctor_degree"]
           governorate: string
           id: string
           image: string
+          is_active: boolean
           name: string
           patients_count: number
+          phone: string
           price: number
           rating: number
           specialty: string
@@ -170,15 +174,19 @@ export type Database = {
           whatsapp_number: string | null
         }
         Insert: {
+          address?: string
           area: string
           bio?: string
           city?: string
           created_at?: string
+          degree?: Database["public"]["Enums"]["doctor_degree"]
           governorate?: string
           id?: string
           image?: string
+          is_active?: boolean
           name: string
           patients_count?: number
+          phone?: string
           price?: number
           rating?: number
           specialty: string
@@ -186,15 +194,19 @@ export type Database = {
           whatsapp_number?: string | null
         }
         Update: {
+          address?: string
           area?: string
           bio?: string
           city?: string
           created_at?: string
+          degree?: Database["public"]["Enums"]["doctor_degree"]
           governorate?: string
           id?: string
           image?: string
+          is_active?: boolean
           name?: string
           patients_count?: number
+          phone?: string
           price?: number
           rating?: number
           specialty?: string
@@ -285,6 +297,7 @@ export type Database = {
       app_role: "patient" | "doctor" | "receptionist" | "admin"
       booking_status: "upcoming" | "done" | "cancelled"
       booking_type: "new" | "followup"
+      doctor_degree: "specialist" | "consultant" | "professor"
       gender_type: "male" | "female"
     }
     CompositeTypes: {
@@ -416,6 +429,7 @@ export const Constants = {
       app_role: ["patient", "doctor", "receptionist", "admin"],
       booking_status: ["upcoming", "done", "cancelled"],
       booking_type: ["new", "followup"],
+      doctor_degree: ["specialist", "consultant", "professor"],
       gender_type: ["male", "female"],
     },
   },

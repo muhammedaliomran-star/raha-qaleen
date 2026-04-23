@@ -1,11 +1,11 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { ArrowRight, MapPin, Stethoscope, BadgeCheck, Star, Users } from "lucide-react";
+import { ArrowRight, MapPin, Stethoscope, BadgeCheck, Star, Users, GraduationCap, Home, Phone } from "lucide-react";
 import { PageShell } from "@/components/PageShell";
 import { BookingModal } from "@/components/BookingModal";
 import { WhatsAppButton } from "@/components/WhatsAppButton";
 import { supabase } from "@/integrations/supabase/client";
-import type { Doctor } from "@/lib/store";
+import { DEGREE_LABEL, type Doctor } from "@/lib/store";
 
 export const Route = createFileRoute("/doctor/$id")({
   head: () => ({ meta: [{ title: "ملف الطبيب | RAHA — QALEEN" }] }),
@@ -46,6 +46,9 @@ function DoctorPage() {
               <h1 className="text-2xl sm:text-3xl font-extrabold">{doctor.name}</h1>
               <div className="mt-2 flex flex-wrap gap-2 text-sm">
                 <span className="glass px-3 h-8 rounded-full inline-flex items-center gap-1"><Stethoscope className="w-3.5 h-3.5" /> {doctor.specialty}</span>
+                {doctor.degree && (
+                  <span className="glass px-3 h-8 rounded-full inline-flex items-center gap-1 text-primary"><GraduationCap className="w-3.5 h-3.5" /> {DEGREE_LABEL[doctor.degree]}</span>
+                )}
                 <span className="glass px-3 h-8 rounded-full inline-flex items-center gap-1"><MapPin className="w-3.5 h-3.5" /> {doctor.area}</span>
                 <span className="glass px-3 h-8 rounded-full inline-flex items-center gap-1 text-success"><BadgeCheck className="w-3.5 h-3.5" /> متاح اليوم</span>
                 <span className="glass px-3 h-8 rounded-full inline-flex items-center gap-1 text-amber-600"><Star className="w-3.5 h-3.5 fill-current" /> {rating.toFixed(1)}</span>
@@ -53,6 +56,12 @@ function DoctorPage() {
                   <span className="glass px-3 h-8 rounded-full inline-flex items-center gap-1"><Users className="w-3.5 h-3.5" /> {patients}+ مريض</span>
                 )}
               </div>
+              {(doctor.address || doctor.phone) && (
+                <div className="mt-3 flex flex-wrap gap-3 text-sm text-muted-foreground">
+                  {doctor.address && <span className="inline-flex items-center gap-1"><Home className="w-3.5 h-3.5" /> {doctor.address}</span>}
+                  {doctor.phone && <span className="inline-flex items-center gap-1" dir="ltr"><Phone className="w-3.5 h-3.5" /> {doctor.phone}</span>}
+                </div>
+              )}
               <p className="mt-4 text-muted-foreground leading-relaxed">
                 {doctor.bio || "خبرة طويلة في تقديم رعاية طبية متميزة. يستقبل المرضى يومياً بأحدث الأساليب الطبية وأفضل خدمة ممكنة."}
               </p>

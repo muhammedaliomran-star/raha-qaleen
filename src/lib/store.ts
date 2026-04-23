@@ -33,7 +33,19 @@ export interface Doctor {
   city?: string;
   governorate?: string;
   bio?: string;
+  degree?: DoctorDegree;
+  phone?: string;
+  address?: string;
+  is_active?: boolean;
 }
+
+export type DoctorDegree = "specialist" | "consultant" | "professor";
+
+export const DEGREE_LABEL: Record<DoctorDegree, string> = {
+  specialist: "أخصائي",
+  consultant: "استشاري",
+  professor: "أستاذ دكتور",
+};
 
 export interface AvailabilitySlot {
   id: string;

@@ -1,10 +1,17 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
-import { Users, Stethoscope, CalendarCheck, Megaphone, Trash2, Plus, Upload, Save, ArrowUp, ArrowDown, Loader2, MapPin, DollarSign, Clock, User as UserIcon, ImageIcon } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import {
+  Users, Stethoscope, CalendarCheck, Megaphone, Trash2, Plus, Upload, Save,
+  ArrowUp, ArrowDown, Loader2, MapPin, Clock, User as UserIcon,
+  Search, Pencil, X, Phone, Home, GraduationCap, FileText, AlertTriangle, Banknote,
+} from "lucide-react";
 import { PageShell } from "@/components/PageShell";
 import { RoleGuard } from "@/components/RoleGuard";
 import { supabase } from "@/integrations/supabase/client";
-import { SPECIALTIES, QALEEN_AREAS, ROLE_LABEL, type Ad, type Booking, type Doctor, type Role } from "@/lib/store";
+import {
+  SPECIALTIES, QALEEN_AREAS, ROLE_LABEL, DEGREE_LABEL,
+  type Ad, type Booking, type Doctor, type Role, type DoctorDegree,
+} from "@/lib/store";
 
 export const Route = createFileRoute("/dashboard/admin")({
   head: () => ({ meta: [{ title: "لوحة الأدمن | RAHA" }] }),
@@ -52,6 +59,12 @@ function AdminDash() {
     setDoctors((doctorsRes.data ?? []).map((d) => ({
       id: d.id, name: d.name, specialty: d.specialty, area: d.area,
       price: d.price, image: d.image, times: d.times,
+      whatsapp_number: d.whatsapp_number ?? "",
+      bio: d.bio ?? "",
+      degree: (d.degree as DoctorDegree) ?? "specialist",
+      phone: (d as { phone?: string }).phone ?? "",
+      address: (d as { address?: string }).address ?? "",
+      is_active: (d as { is_active?: boolean }).is_active ?? true,
     })));
     setBookings((bookingsRes.data ?? []).map((b) => ({
       id: b.id, doctorId: b.doctor_id, doctorName: b.doctor_name,
@@ -328,13 +341,295 @@ function AdCard({
   );
 }
 
-function DoctorsManager({ doctors, onChange }: { doctors: Doctor[]; onChange: () => void }) {
-  const initialTimes = ["10:00", "12:00", "16:00"];
-  const emptyForm = {
-    name: "", specialty: SPECIALTIES[0].name, area: QALEEN_AREAS[0],
-    price: "", image: "", times: initialTimes,
+/* ============================================================
+   DOCTORS MANAGER — search • status toggle • edit modal • delete confirm
+   ============================================================ */
+
+type DoctorFormState = {
+  name: string;
+  specialty: string;
+  area: string;
+  price: string;
+  image: string;
+  times: string[];
+  degree: DoctorDegree;
+  phone: string;
+  address: string;
+  bio: string;
+  whatsapp_number: string;
+};
+
+function emptyDoctorForm(): DoctorFormState {
+  return {
+    name: "",
+    specialty: SPECIALTIES[0].name,
+    area: QALEEN_AREAS[0],
+    price: "",
+    image: "",
+    times: ["10:00", "12:00", "16:00"],
+    degree: "specialist",
+    phone: "",
+    address: "",
+    bio: "",
+    whatsapp_number: "",
   };
-  const [form, setForm] = useState(emptyForm);
+}
+
+function DoctorsManager({ doctors, onChange }: { doctors: Doctor[]; onChange: () => void }) {
+  const [search, setSearch] = useState("");
+  const [editing, setEditing] = useState<Doctor | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState<Doctor | null>(null);
+
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return doctors;
+    return doctors.filter(
+      (d) =>
+        d.name.toLowerCase().includes(q) ||
+        d.specialty.toLowerCase().includes(q) ||
+        d.area.toLowerCase().includes(q),
+    );
+  }, [doctors, search]);
+
+  const toggleActive = async (d: Doctor) => {
+    await supabase.from("doctors").update({ is_active: !(d.is_active ?? true) }).eq("id", d.id);
+    onChange();
+  };
+
+  const performDelete = async () => {
+    if (!confirmDelete) return;
+    await supabase.from("doctors").delete().eq("id", confirmDelete.id);
+    setConfirmDelete(null);
+    onChange();
+  };
+
+  return (
+    <div className="space-y-6">
+      <DoctorFormCard mode="create" initial={emptyDoctorForm()} onDone={onChange} />
+
+      {/* Search */}
+      <div className="relative">
+        <Search className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+        <input
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="ابحث بالاسم أو التخصص أو المنطقة..."
+          className="w-full h-12 pr-11 pl-4 rounded-2xl bg-card border border-border/60 shadow-soft text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
+        />
+      </div>
+
+      {/* List */}
+      {filtered.length === 0 ? (
+        <div className="bg-card rounded-3xl shadow-soft border border-border/60 p-12 text-center">
+          <Stethoscope className="w-12 h-12 mx-auto text-muted-foreground/40 mb-3" />
+          <p className="text-muted-foreground">{doctors.length === 0 ? "لا يوجد أطباء بعد — أضف أول طبيب من النموذج أعلاه" : "لا توجد نتائج مطابقة"}</p>
+        </div>
+      ) : (
+        <>
+          {/* Mobile cards */}
+          <div className="grid gap-3 sm:hidden">
+            {filtered.map((d) => (
+              <DoctorMobileCard key={d.id} d={d} onEdit={() => setEditing(d)} onDelete={() => setConfirmDelete(d)} onToggle={() => toggleActive(d)} />
+            ))}
+          </div>
+
+          {/* Desktop table */}
+          <div className="hidden sm:block bg-card rounded-3xl shadow-soft border border-border/60 overflow-hidden">
+            <table className="w-full text-sm">
+              <thead className="bg-muted/50">
+                <tr className="text-right">
+                  <th className="p-4 font-semibold">الطبيب</th>
+                  <th className="p-4 font-semibold">التخصص</th>
+                  <th className="p-4 font-semibold">المنطقة</th>
+                  <th className="p-4 font-semibold">السعر</th>
+                  <th className="p-4 font-semibold text-center">الحالة</th>
+                  <th className="p-4 font-semibold text-center">الإجراءات</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filtered.map((d) => (
+                  <tr key={d.id} className="border-t border-border/50 hover:bg-muted/30 transition">
+                    <td className="p-4 font-semibold">
+                      <div className="flex items-center gap-3">
+                        <img src={d.image} className="w-10 h-10 rounded-xl object-cover ring-1 ring-border" alt="" />
+                        <div className="min-w-0">
+                          <div className="truncate">{d.name}</div>
+                          <div className="text-xs font-normal text-muted-foreground">{DEGREE_LABEL[d.degree ?? "specialist"]}</div>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="p-4 text-muted-foreground">{d.specialty}</td>
+                    <td className="p-4"><span className="inline-flex items-center gap-1 text-muted-foreground"><MapPin className="w-3.5 h-3.5" />{d.area}</span></td>
+                    <td className="p-4">
+                      <span className="inline-flex items-baseline gap-1 font-bold text-primary">
+                        {d.price.toLocaleString("ar-EG")}
+                        <span className="text-[11px] font-medium text-muted-foreground">ج.م</span>
+                      </span>
+                    </td>
+                    <td className="p-4 text-center">
+                      <StatusToggle active={d.is_active ?? true} onChange={() => toggleActive(d)} />
+                    </td>
+                    <td className="p-4">
+                      <div className="flex items-center justify-center gap-1">
+                        <button onClick={() => setEditing(d)} title="تعديل"
+                          className="p-2 rounded-lg text-primary hover:bg-primary/10 transition">
+                          <Pencil className="w-4 h-4" />
+                        </button>
+                        <button onClick={() => setConfirmDelete(d)} title="حذف"
+                          className="p-2 rounded-lg text-destructive hover:bg-destructive/10 transition">
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </>
+      )}
+
+      {/* Edit Modal */}
+      {editing && (
+        <EditDoctorModal
+          doctor={editing}
+          onClose={() => setEditing(null)}
+          onSaved={() => { setEditing(null); onChange(); }}
+        />
+      )}
+
+      {/* Delete confirmation */}
+      {confirmDelete && (
+        <ConfirmDeleteModal
+          doctor={confirmDelete}
+          onCancel={() => setConfirmDelete(null)}
+          onConfirm={performDelete}
+        />
+      )}
+    </div>
+  );
+}
+
+function DoctorMobileCard({
+  d, onEdit, onDelete, onToggle,
+}: {
+  d: Doctor; onEdit: () => void; onDelete: () => void; onToggle: () => void;
+}) {
+  return (
+    <div className={`bg-card rounded-2xl shadow-soft border p-4 transition ${d.is_active === false ? "border-destructive/30 opacity-70" : "border-border/60"}`}>
+      <div className="flex items-start gap-3">
+        <img src={d.image} alt={d.name} className="w-14 h-14 rounded-xl object-cover ring-1 ring-border" />
+        <div className="flex-1 min-w-0">
+          <div className="flex items-start justify-between gap-2">
+            <div className="min-w-0">
+              <h4 className="font-bold truncate">{d.name}</h4>
+              <p className="text-[11px] text-muted-foreground">{DEGREE_LABEL[d.degree ?? "specialist"]} • {d.specialty}</p>
+            </div>
+            <StatusToggle active={d.is_active ?? true} onChange={onToggle} />
+          </div>
+          <div className="flex flex-wrap gap-1.5 mt-2 text-xs">
+            <span className="inline-flex items-center gap-1 bg-muted px-2 py-1 rounded-full"><MapPin className="w-3 h-3" /> {d.area}</span>
+            <span className="inline-flex items-baseline gap-1 bg-primary/10 text-primary px-2 py-1 rounded-full font-bold">
+              {d.price.toLocaleString("ar-EG")}<span className="text-[10px] font-medium">ج.م</span>
+            </span>
+          </div>
+          <div className="flex items-center gap-1 mt-3 pt-3 border-t border-border/50">
+            <button onClick={onEdit} className="flex-1 inline-flex items-center justify-center gap-1.5 h-9 rounded-lg text-primary bg-primary/10 hover:bg-primary/15 text-xs font-bold transition">
+              <Pencil className="w-3.5 h-3.5" /> تعديل
+            </button>
+            <button onClick={onDelete} className="inline-flex items-center justify-center gap-1.5 h-9 px-3 rounded-lg text-destructive bg-destructive/10 hover:bg-destructive/15 text-xs font-bold transition">
+              <Trash2 className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function StatusToggle({ active, onChange }: { active: boolean; onChange: () => void }) {
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={active}
+      onClick={onChange}
+      className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors ${active ? "bg-primary" : "bg-muted-foreground/30"}`}
+      title={active ? "مفعّل" : "معطّل"}
+    >
+      <span className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform ${active ? "-translate-x-0.5" : "-translate-x-[22px]"}`} />
+    </button>
+  );
+}
+
+function ConfirmDeleteModal({ doctor, onCancel, onConfirm }: { doctor: Doctor; onCancel: () => void; onConfirm: () => void }) {
+  return (
+    <div className="fixed inset-0 z-50 grid place-items-center p-4 bg-foreground/40 backdrop-blur-sm" onClick={onCancel}>
+      <div className="bg-card rounded-3xl shadow-2xl border border-border/60 p-6 w-full max-w-sm" onClick={(e) => e.stopPropagation()}>
+        <div className="w-12 h-12 mx-auto rounded-full bg-destructive/10 grid place-items-center text-destructive">
+          <AlertTriangle className="w-6 h-6" />
+        </div>
+        <h3 className="mt-4 text-center font-extrabold text-lg">تأكيد الحذف</h3>
+        <p className="mt-2 text-center text-sm text-muted-foreground">
+          هل أنت متأكد من حذف <strong className="text-foreground">{doctor.name}</strong>؟ لا يمكن التراجع عن هذا الإجراء.
+        </p>
+        <div className="mt-6 grid grid-cols-2 gap-2">
+          <button onClick={onCancel} className="h-11 rounded-xl border border-border bg-background hover:bg-muted text-sm font-bold transition">
+            إلغاء
+          </button>
+          <button onClick={onConfirm} className="h-11 rounded-xl bg-destructive text-destructive-foreground hover:bg-destructive/90 text-sm font-bold transition inline-flex items-center justify-center gap-1.5">
+            <Trash2 className="w-4 h-4" /> حذف
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function EditDoctorModal({ doctor, onClose, onSaved }: { doctor: Doctor; onClose: () => void; onSaved: () => void }) {
+  const initial: DoctorFormState = {
+    name: doctor.name,
+    specialty: doctor.specialty,
+    area: doctor.area,
+    price: String(doctor.price ?? ""),
+    image: doctor.image,
+    times: doctor.times ?? [],
+    degree: doctor.degree ?? "specialist",
+    phone: doctor.phone ?? "",
+    address: doctor.address ?? "",
+    bio: doctor.bio ?? "",
+    whatsapp_number: doctor.whatsapp_number ?? "",
+  };
+  return (
+    <div className="fixed inset-0 z-50 grid place-items-center p-4 bg-foreground/40 backdrop-blur-sm overflow-y-auto" onClick={onClose}>
+      <div className="bg-card rounded-3xl shadow-2xl border border-border/60 w-full max-w-3xl my-8" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center justify-between p-5 border-b border-border/60 sticky top-0 bg-card rounded-t-3xl z-10">
+          <div className="flex items-center gap-2">
+            <Pencil className="w-5 h-5 text-primary" />
+            <h3 className="font-extrabold text-lg">تعديل بيانات الطبيب</h3>
+          </div>
+          <button onClick={onClose} className="w-9 h-9 rounded-full hover:bg-muted grid place-items-center"><X className="w-4 h-4" /></button>
+        </div>
+        <div className="p-5">
+          <DoctorFormCard mode="edit" doctorId={doctor.id} initial={initial} onDone={onSaved} embedded />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ----------- Reusable form (create + edit) ----------- */
+
+function DoctorFormCard({
+  mode, doctorId, initial, onDone, embedded,
+}: {
+  mode: "create" | "edit";
+  doctorId?: string;
+  initial: DoctorFormState;
+  onDone: () => void;
+  embedded?: boolean;
+}) {
+  const [form, setForm] = useState<DoctorFormState>(initial);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [uploading, setUploading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -361,48 +656,52 @@ function DoctorsManager({ doctors, onChange }: { doctors: Doctor[]; onChange: ()
     if (!form.area) e.area = "اختر المنطقة";
     if (!form.price || Number(form.price) <= 0) e.price = "أدخل سعراً صحيحاً";
     if (form.times.length === 0) e.times = "أضف موعداً واحداً على الأقل";
+    if (form.phone && !/^[0-9+\-\s]{6,20}$/.test(form.phone.trim())) e.phone = "رقم هاتف غير صحيح";
     setErrors(e);
     return Object.keys(e).length === 0;
   };
 
-  const addDoctor = async () => {
+  const submit = async () => {
     if (!validate()) return;
     setSubmitting(true);
-    const { error: err } = await supabase.from("doctors").insert({
+    const payload = {
       name: form.name.trim(),
       specialty: form.specialty,
       area: form.area,
       price: Number(form.price) || 0,
       image: form.image || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(form.name)}&backgroundColor=1856FF`,
       times: form.times.map((t) => formatTimeAr(t)),
-    });
+      degree: form.degree,
+      phone: form.phone.trim(),
+      address: form.address.trim(),
+      bio: form.bio.trim(),
+      whatsapp_number: form.whatsapp_number.trim(),
+    };
+    const { error: err } = mode === "create"
+      ? await supabase.from("doctors").insert(payload)
+      : await supabase.from("doctors").update(payload).eq("id", doctorId!);
     setSubmitting(false);
     if (err) { setErrors({ form: err.message }); return; }
-    setForm(emptyForm);
+    if (mode === "create") setForm(emptyDoctorForm());
     setErrors({});
-    onChange();
+    onDone();
   };
 
   const addTime = () => {
-    if (!newTime) return;
-    if (form.times.includes(newTime)) { setNewTime(""); return; }
+    if (!newTime || form.times.includes(newTime)) { setNewTime(""); return; }
     setForm((f) => ({ ...f, times: [...f.times, newTime].sort() }));
     setNewTime("");
     setErrors((e) => { const { times, ...rest } = e; return rest; });
   };
-
   const removeTime = (t: string) => setForm((f) => ({ ...f, times: f.times.filter((x) => x !== t) }));
 
-  const remove = async (id: string) => {
-    if (!confirm("حذف هذا الطبيب؟")) return;
-    await supabase.from("doctors").delete().eq("id", id);
-    onChange();
-  };
+  const wrapperCls = embedded
+    ? "space-y-5"
+    : "bg-card rounded-3xl shadow-soft border border-border/60 p-5 sm:p-6 space-y-5";
 
   return (
-    <div className="space-y-6">
-      {/* Add new doctor — modern card form */}
-      <div className="bg-card rounded-3xl shadow-soft border border-border/60 p-5 sm:p-6 space-y-5">
+    <div className={wrapperCls}>
+      {!embedded && (
         <div className="flex items-center gap-3 pb-2 border-b border-border/50">
           <div className="w-10 h-10 rounded-xl btn-primary grid place-items-center text-primary-foreground">
             <Plus className="w-5 h-5" />
@@ -412,164 +711,114 @@ function DoctorsManager({ doctors, onChange }: { doctors: Doctor[]; onChange: ()
             <p className="text-xs text-muted-foreground">املأ البيانات الأساسية لإضافة طبيب للمنصة</p>
           </div>
         </div>
+      )}
 
-        <div className="grid sm:grid-cols-12 gap-4">
-          {/* Avatar upload */}
-          <div className="sm:col-span-3 flex sm:flex-col items-center gap-3">
-            <div className="relative">
-              {form.image ? (
-                <img src={form.image} alt="" className="w-24 h-24 rounded-2xl object-cover ring-2 ring-primary/20" />
-              ) : (
-                <div className="w-24 h-24 rounded-2xl bg-muted grid place-items-center text-muted-foreground">
-                  <UserIcon className="w-9 h-9" />
-                </div>
-              )}
-              {uploading && (
-                <div className="absolute inset-0 bg-black/40 rounded-2xl grid place-items-center">
-                  <Loader2 className="w-6 h-6 animate-spin text-white" />
-                </div>
-              )}
-            </div>
-            <label className="cursor-pointer inline-flex items-center gap-2 text-xs font-semibold text-primary hover:underline">
-              <Upload className="w-3.5 h-3.5" />
-              {form.image ? "تغيير الصورة" : "رفع صورة"}
-              <input type="file" accept="image/*" className="hidden" disabled={uploading}
-                onChange={(e) => { const f = e.target.files?.[0]; if (f) void uploadAvatar(f); e.target.value = ""; }} />
-            </label>
-            {errors.image && <p className="text-xs text-destructive">{errors.image}</p>}
-          </div>
-
-          {/* Fields */}
-          <div className="sm:col-span-9 grid sm:grid-cols-2 gap-4">
-            <FloatingField label="اسم الطبيب" icon={<UserIcon className="w-4 h-4" />} error={errors.name}>
-              <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })}
-                className="floating-input" placeholder=" " />
-            </FloatingField>
-
-            <FloatingField label="التخصص" icon={<Stethoscope className="w-4 h-4" />}>
-              <select value={form.specialty} onChange={(e) => setForm({ ...form, specialty: e.target.value })}
-                className="floating-input">
-                {SPECIALTIES.map((s) => <option key={s.key} value={s.name}>{s.emoji} {s.name}</option>)}
-              </select>
-            </FloatingField>
-
-            <FloatingField label="المنطقة" icon={<MapPin className="w-4 h-4" />} error={errors.area}>
-              <select value={form.area} onChange={(e) => setForm({ ...form, area: e.target.value })}
-                className="floating-input">
-                {QALEEN_AREAS.map((a) => <option key={a} value={a}>{a}</option>)}
-              </select>
-            </FloatingField>
-
-            <FloatingField label="السعر (ج.م)" icon={<DollarSign className="w-4 h-4" />} error={errors.price}>
-              <input type="number" min={0} value={form.price}
-                onChange={(e) => setForm({ ...form, price: e.target.value })}
-                className="floating-input" placeholder=" " />
-            </FloatingField>
-
-            {/* Times picker — full width */}
-            <div className="sm:col-span-2">
-              <label className="flex items-center gap-2 text-sm font-semibold text-foreground/80 mb-2">
-                <Clock className="w-4 h-4 text-primary" /> مواعيد العمل
-              </label>
-              <div className="flex flex-wrap gap-2 mb-2">
-                {form.times.map((t) => (
-                  <span key={t} className="inline-flex items-center gap-1.5 bg-primary/10 text-primary px-3 py-1.5 rounded-full text-sm font-semibold">
-                    {formatTimeAr(t)}
-                    <button type="button" onClick={() => removeTime(t)} className="hover:bg-primary/20 rounded-full p-0.5">
-                      <Trash2 className="w-3 h-3" />
-                    </button>
-                  </span>
-                ))}
-                {form.times.length === 0 && <span className="text-xs text-muted-foreground">لم يتم إضافة مواعيد بعد</span>}
+      <div className="grid sm:grid-cols-12 gap-4">
+        {/* Avatar upload */}
+        <div className="sm:col-span-3 flex sm:flex-col items-center gap-3">
+          <div className="relative">
+            {form.image ? (
+              <img src={form.image} alt="" className="w-24 h-24 rounded-2xl object-cover ring-2 ring-primary/20" />
+            ) : (
+              <div className="w-24 h-24 rounded-2xl bg-muted grid place-items-center text-muted-foreground">
+                <UserIcon className="w-9 h-9" />
               </div>
-              <div className="flex gap-2">
-                <input type="time" value={newTime} onChange={(e) => setNewTime(e.target.value)}
-                  className="floating-input flex-1 max-w-[180px]" />
-                <button type="button" onClick={addTime} disabled={!newTime}
-                  className="btn-primary h-11 px-4 rounded-xl text-sm font-bold inline-flex items-center gap-1 disabled:opacity-50">
-                  <Plus className="w-4 h-4" /> إضافة موعد
-                </button>
+            )}
+            {uploading && (
+              <div className="absolute inset-0 bg-black/40 rounded-2xl grid place-items-center">
+                <Loader2 className="w-6 h-6 animate-spin text-white" />
               </div>
-              {errors.times && <p className="mt-1 text-xs text-destructive">{errors.times}</p>}
-            </div>
+            )}
           </div>
+          <label className="cursor-pointer inline-flex items-center gap-2 text-xs font-semibold text-primary hover:underline">
+            <Upload className="w-3.5 h-3.5" />
+            {form.image ? "تغيير الصورة" : "رفع صورة"}
+            <input type="file" accept="image/*" className="hidden" disabled={uploading}
+              onChange={(e) => { const f = e.target.files?.[0]; if (f) void uploadAvatar(f); e.target.value = ""; }} />
+          </label>
+          {errors.image && <p className="text-xs text-destructive">{errors.image}</p>}
         </div>
 
-        {errors.form && <div className="text-destructive text-sm bg-destructive/10 p-3 rounded-xl">{errors.form}</div>}
+        <div className="sm:col-span-9 grid sm:grid-cols-2 gap-4">
+          <FloatingField label="اسم الطبيب" icon={<UserIcon className="w-4 h-4" />} error={errors.name}>
+            <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="floating-input" placeholder=" " />
+          </FloatingField>
 
-        <button onClick={addDoctor} disabled={submitting || uploading}
-          className="btn-primary h-12 px-6 rounded-xl font-bold inline-flex items-center justify-center gap-2 w-full sm:w-auto disabled:opacity-50">
-          {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-5 h-5" />}
-          إضافة الطبيب
-        </button>
+          <FloatingField label="الدرجة العلمية" icon={<GraduationCap className="w-4 h-4" />}>
+            <select value={form.degree} onChange={(e) => setForm({ ...form, degree: e.target.value as DoctorDegree })} className="floating-input">
+              {(Object.keys(DEGREE_LABEL) as DoctorDegree[]).map((k) => <option key={k} value={k}>{DEGREE_LABEL[k]}</option>)}
+            </select>
+          </FloatingField>
+
+          <FloatingField label="التخصص" icon={<Stethoscope className="w-4 h-4" />}>
+            <select value={form.specialty} onChange={(e) => setForm({ ...form, specialty: e.target.value })} className="floating-input">
+              {SPECIALTIES.map((s) => <option key={s.key} value={s.name}>{s.emoji} {s.name}</option>)}
+            </select>
+          </FloatingField>
+
+          <FloatingField label="المنطقة" icon={<MapPin className="w-4 h-4" />} error={errors.area}>
+            <select value={form.area} onChange={(e) => setForm({ ...form, area: e.target.value })} className="floating-input">
+              {QALEEN_AREAS.map((a) => <option key={a} value={a}>{a}</option>)}
+            </select>
+          </FloatingField>
+
+          <FloatingField label="رقم الهاتف" icon={<Phone className="w-4 h-4" />} error={errors.phone}>
+            <input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} className="floating-input" placeholder=" " dir="ltr" />
+          </FloatingField>
+
+          <FloatingField label="رقم واتساب (اختياري)" icon={<Phone className="w-4 h-4" />}>
+            <input value={form.whatsapp_number} onChange={(e) => setForm({ ...form, whatsapp_number: e.target.value })} className="floating-input" placeholder=" " dir="ltr" />
+          </FloatingField>
+
+          <FloatingField label="السعر (ج.م)" icon={<Banknote className="w-4 h-4" />} error={errors.price}>
+            <input type="number" min={0} value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} className="floating-input" placeholder=" " />
+          </FloatingField>
+
+          <FloatingField label="العنوان التفصيلي" icon={<Home className="w-4 h-4" />}>
+            <input value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} className="floating-input" placeholder=" " />
+          </FloatingField>
+
+          <div className="sm:col-span-2">
+            <FloatingField label="نبذة مختصرة عن الطبيب" icon={<FileText className="w-4 h-4" />}>
+              <textarea value={form.bio} onChange={(e) => setForm({ ...form, bio: e.target.value })} rows={3}
+                className="floating-input resize-none pt-3" placeholder=" " />
+            </FloatingField>
+          </div>
+
+          <div className="sm:col-span-2">
+            <label className="flex items-center gap-2 text-sm font-semibold text-foreground/80 mb-2">
+              <Clock className="w-4 h-4 text-primary" /> مواعيد العمل
+            </label>
+            <div className="flex flex-wrap gap-2 mb-2">
+              {form.times.map((t) => (
+                <span key={t} className="inline-flex items-center gap-1.5 bg-primary/10 text-primary px-3 py-1.5 rounded-full text-sm font-semibold">
+                  {formatTimeAr(t)}
+                  <button type="button" onClick={() => removeTime(t)} className="hover:bg-primary/20 rounded-full p-0.5">
+                    <Trash2 className="w-3 h-3" />
+                  </button>
+                </span>
+              ))}
+              {form.times.length === 0 && <span className="text-xs text-muted-foreground">لم يتم إضافة مواعيد بعد</span>}
+            </div>
+            <div className="flex gap-2">
+              <input type="time" value={newTime} onChange={(e) => setNewTime(e.target.value)} className="floating-input flex-1 max-w-[180px]" />
+              <button type="button" onClick={addTime} disabled={!newTime}
+                className="btn-primary h-11 px-4 rounded-xl text-sm font-bold inline-flex items-center gap-1 disabled:opacity-50">
+                <Plus className="w-4 h-4" /> إضافة موعد
+              </button>
+            </div>
+            {errors.times && <p className="mt-1 text-xs text-destructive">{errors.times}</p>}
+          </div>
+        </div>
       </div>
 
-      {/* Doctors list */}
-      {doctors.length === 0 ? (
-        <div className="bg-card rounded-3xl shadow-soft border border-border/60 p-12 text-center">
-          <Stethoscope className="w-12 h-12 mx-auto text-muted-foreground/40 mb-3" />
-          <p className="text-muted-foreground">لا يوجد أطباء بعد — أضف أول طبيب من النموذج أعلاه</p>
-        </div>
-      ) : (
-        <div className="grid gap-3 sm:hidden">
-          {/* Mobile cards */}
-          {doctors.map((d) => (
-            <div key={d.id} className="bg-card rounded-2xl shadow-soft border border-border/60 p-4">
-              <div className="flex items-start gap-3">
-                <img src={d.image} alt={d.name} className="w-14 h-14 rounded-xl object-cover ring-1 ring-border" />
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-start justify-between gap-2">
-                    <h4 className="font-bold truncate">{d.name}</h4>
-                    <button onClick={() => remove(d.id)} className="text-destructive p-1.5 hover:bg-destructive/10 rounded-lg shrink-0">
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
-                  <p className="text-xs text-muted-foreground">{d.specialty}</p>
-                  <div className="flex flex-wrap gap-2 mt-2 text-xs">
-                    <span className="inline-flex items-center gap-1 bg-muted px-2 py-1 rounded-full"><MapPin className="w-3 h-3" /> {d.area}</span>
-                    <span className="inline-flex items-center gap-1 bg-primary/10 text-primary px-2 py-1 rounded-full font-bold">{d.price} ج.م</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
+      {errors.form && <div className="text-destructive text-sm bg-destructive/10 p-3 rounded-xl">{errors.form}</div>}
 
-      {/* Desktop table */}
-      {doctors.length > 0 && (
-        <div className="hidden sm:block bg-card rounded-3xl shadow-soft border border-border/60 overflow-hidden">
-          <table className="w-full text-sm">
-            <thead className="bg-muted/50">
-              <tr className="text-right">
-                <th className="p-4 font-semibold">الطبيب</th>
-                <th className="p-4 font-semibold">التخصص</th>
-                <th className="p-4 font-semibold">المنطقة</th>
-                <th className="p-4 font-semibold">السعر</th>
-                <th className="p-4"></th>
-              </tr>
-            </thead>
-            <tbody>
-              {doctors.map((d) => (
-                <tr key={d.id} className="border-t border-border/50 hover:bg-muted/30 transition">
-                  <td className="p-4 font-semibold flex items-center gap-3">
-                    <img src={d.image} className="w-10 h-10 rounded-xl object-cover ring-1 ring-border" alt="" />
-                    {d.name}
-                  </td>
-                  <td className="p-4 text-muted-foreground">{d.specialty}</td>
-                  <td className="p-4"><span className="inline-flex items-center gap-1 text-muted-foreground"><MapPin className="w-3.5 h-3.5" />{d.area}</span></td>
-                  <td className="p-4 font-bold text-primary">{d.price} ج.م</td>
-                  <td className="p-4 text-left">
-                    <button onClick={() => remove(d.id)} className="text-destructive p-2 hover:bg-destructive/10 rounded-lg">
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
+      <button onClick={submit} disabled={submitting || uploading}
+        className="btn-primary h-12 px-6 rounded-xl font-bold inline-flex items-center justify-center gap-2 w-full sm:w-auto disabled:opacity-50">
+        {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : mode === "create" ? <Plus className="w-5 h-5" /> : <Save className="w-5 h-5" />}
+        {mode === "create" ? "إضافة الطبيب" : "تحديث البيانات"}
+      </button>
     </div>
   );
 }
@@ -578,7 +827,7 @@ function FloatingField({ label, icon, error, children }: { label: string; icon?:
   return (
     <div className="floating-field">
       <div className={`relative rounded-xl border transition ${error ? "border-destructive" : "border-border focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20"} bg-background`}>
-        {icon && <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none">{icon}</span>}
+        {icon && <span className="absolute right-3 top-3 text-muted-foreground pointer-events-none">{icon}</span>}
         <label className="absolute right-9 -top-2 px-1.5 bg-card text-xs font-semibold text-foreground/70">{label}</label>
         {children}
       </div>
@@ -588,7 +837,6 @@ function FloatingField({ label, icon, error, children }: { label: string; icon?:
 }
 
 function formatTimeAr(t: string): string {
-  // accept "HH:MM" 24h or already-formatted Arabic strings
   if (!/^\d{2}:\d{2}$/.test(t)) return t;
   const [hStr, mStr] = t.split(":");
   const h = parseInt(hStr, 10);
@@ -596,3 +844,4 @@ function formatTimeAr(t: string): string {
   const h12 = h % 12 === 0 ? 12 : h % 12;
   return `${String(h12).padStart(2, "0")}:${mStr} ${suffix}`;
 }
+
